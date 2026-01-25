@@ -48,23 +48,56 @@ const corsOriginFunction = (origin: string | undefined, callback: (err: Error | 
     return callback(null, true);
   }
 
+  // Allow the server's own domain (for API docs)
+  if (origin.includes('loyaltering-server.vercel.app')) {
+    return callback(null, true);
+  }
+
+  // Allow localhost for development
+  if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+    return callback(null, true);
+  }
+
+  // Log rejected origin for debugging
+  console.log('CORS rejected origin:', origin);
+  
   // Reject if not in allowed origins
   callback(new Error('Not allowed by CORS'));
 };
 
+// CORS configuration with better error handling
 app.use(cors({
   origin: corsOriginFunction,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Email'],
+  exposedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Handle preflight requests
+app.options('*', cors({
+  origin: corsOriginFunction,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Email']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Swagger Documentation
 // @ts-ignore - swagger-ui-express has conflicting type definitions
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+const swaggerServe = swaggerUi.serve;
+const swaggerSetup = swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'CMUS API Documentation',
-}));
+});
+
+// Handle Swagger UI - spread array if needed
+if (Array.isArray(swaggerServe)) {
+  app.use('/api-docs', ...swaggerServe, swaggerSetup);
+} else {
+  app.use('/api-docs', swaggerServe as any, swaggerSetup);
+}
 
 // Health check (no DB required)
 app.get('/health', (_req: Request, res: Response) => {
