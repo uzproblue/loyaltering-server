@@ -59,8 +59,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Swagger Documentation
-const swaggerHandlers: express.RequestHandler[] = swaggerUi.serve as any;
-app.use('/api-docs', ...swaggerHandlers, swaggerUi.setup(swaggerSpec, {
+// @ts-ignore - swagger-ui-express has conflicting type definitions
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'CMUS API Documentation',
 }));
@@ -102,6 +102,7 @@ app.get('/health', (_req: Request, res: Response) => {
 // MongoDB connection
 const MONGODB_URI: string = process.env.MONGODB_URI || 'mongodb://localhost:27017/cmus';
 
+// @ts-ignore - mongoose.connect() return type has version-specific differences
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');

@@ -28,7 +28,7 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response) =
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         id: user._id.toString(),
@@ -113,7 +113,7 @@ export const updateUserProfile = async (req: AuthenticatedRequest, res: Response
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Profile updated successfully',
       data: {
@@ -226,7 +226,7 @@ export const updateOnboardingStatus = async (req: AuthenticatedRequest, res: Res
       }
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Onboarding status updated successfully',
       data: {
@@ -284,7 +284,7 @@ export const getTeamMembers = async (req: AuthenticatedRequest, res: Response) =
       .select('-password')
       .sort({ createdAt: -1 });
 
-    res.json({
+    return res.json({
       success: true,
       data: teamMembers.map((user: any) => ({
         id: user._id.toString(),
@@ -425,7 +425,7 @@ export const inviteTeamMember = async (req: AuthenticatedRequest, res: Response)
     await newUser.save();
 
     // Return user data with generated password (for admin to share)
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Team member invited successfully',
       data: {
@@ -576,7 +576,7 @@ export const updateTeamMember = async (req: AuthenticatedRequest, res: Response)
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Team member updated successfully',
       data: {
