@@ -3,7 +3,7 @@ services:
     name: loyaltering-server
     env: node
     buildCommand: corepack enable && corepack prepare yarn@4.5.0 --activate && yarn install && yarn build
-    startCommand: node /opt/render/project/dist/index.js
+    startCommand: yarn start
     envVars:
       - key: NODE_VERSION
         value: 22.22.0
