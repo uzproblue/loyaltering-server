@@ -88,7 +88,7 @@ export const register = async (
     
     // Remove password from response
     const userResponse = savedUser.toObject();
-    delete userResponse.password;
+    delete (userResponse as any).password;
 
     // Generate token
     const token = generateToken(savedUser._id.toString(), savedUser.email, savedUser.role);
@@ -178,7 +178,7 @@ export const login = async (
 
     // Remove password from response
     const userResponse = user.toObject();
-    delete userResponse.password;
+    delete (userResponse as any).password;
 
     res.status(200).json({
       success: true,

@@ -132,6 +132,7 @@ export const getNotificationPermission = async (
 
     res.status(200).json({
       success: true,
+      message: 'Notification permission retrieved successfully',
       data: permission
     });
   } catch (error: any) {
@@ -282,6 +283,7 @@ export const getVapidKey = async (
     const publicKey = getVapidPublicKey();
     res.status(200).json({
       success: true,
+      message: 'VAPID key retrieved successfully',
       data: { publicKey }
     });
   } catch (error: any) {

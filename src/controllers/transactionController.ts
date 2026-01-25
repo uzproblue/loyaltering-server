@@ -174,7 +174,7 @@ export const getCustomerTransactions = async (
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .lean();
+      .lean() as TransactionDocument[];
 
     // Get total count
     const total = await Transaction.countDocuments({ customerId: new mongoose.Types.ObjectId(customerId) });

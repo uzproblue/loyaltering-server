@@ -83,6 +83,7 @@ export const getAllRestaurants = async (
     const restaurants = await Restaurant.find();
     res.status(200).json({
       success: true,
+      message: 'Restaurants retrieved successfully',
       count: restaurants.length,
       data: restaurants
     });
@@ -123,6 +124,7 @@ export const getRestaurantById = async (
 
     res.status(200).json({
       success: true,
+      message: 'Restaurant retrieved successfully',
       data: restaurant
     });
   } catch (error: any) {

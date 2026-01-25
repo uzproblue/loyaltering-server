@@ -4,11 +4,13 @@ import mongoose from 'mongoose';
 
 export interface ApiResponse<T = any> {
   success: boolean;
-  message: string;
+  message?: string;
   data?: T;
   error?: string;
   errors?: string[];
   count?: number;
+  token?: string;
+  user?: any;
 }
 
 export interface TypedRequest<T = any> extends Request {

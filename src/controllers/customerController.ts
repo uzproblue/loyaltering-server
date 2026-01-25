@@ -151,6 +151,7 @@ export const getAllCustomers = async (
     const customers = await Customer.find();
     res.status(200).json({
       success: true,
+      message: 'Customers retrieved successfully',
       count: customers.length,
       data: customers
     });
@@ -199,6 +200,7 @@ export const getCustomerById = async (
 
     res.status(200).json({
       success: true,
+      message: 'Customer retrieved successfully',
       data: customerData
     });
   } catch (error: any) {
