@@ -85,19 +85,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Swagger Documentation
-// @ts-ignore - swagger-ui-express has conflicting type definitions
-const swaggerServe = swaggerUi.serve;
-const swaggerSetup = swaggerUi.setup(swaggerSpec, {
+const swaggerHandlers = swaggerUi.serve as any;
+// @ts-expect-error - swagger-ui-express has conflicting type definitions with express
+app.use('/api-docs', ...(Array.isArray(swaggerHandlers) ? swaggerHandlers : [swaggerHandlers]), swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'CMUS API Documentation',
-});
-
-// Handle Swagger UI - spread array if needed
-if (Array.isArray(swaggerServe)) {
-  app.use('/api-docs', ...swaggerServe, swaggerSetup);
-} else {
-  app.use('/api-docs', swaggerServe as any, swaggerSetup);
-}
+}));
 
 // Health check (no DB required)
 app.get('/health', (_req: Request, res: Response) => {
