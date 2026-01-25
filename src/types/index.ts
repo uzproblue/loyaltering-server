@@ -13,11 +13,11 @@ export interface ApiResponse<T = any> {
 
 export interface TypedRequest<T = any> extends Request {
   body: T;
-  params?: any;
+  params: any;
 }
 
 export interface TypedResponse<T = any> extends Response {
-  json: (body: ApiResponse<T>) => TypedResponse<T>;
+  json: (body: ApiResponse<T>) => this;
 }
 
 export interface CustomerDocument extends Document {

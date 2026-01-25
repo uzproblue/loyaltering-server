@@ -69,13 +69,13 @@ const userSchema = new Schema<UserDocument>({
 });
 
 // Update the updatedAt field before saving
-userSchema.pre('save', function(next: mongoose.CallbackWithoutResult) {
+userSchema.pre('save', function(next) {
   (this as any).updatedAt = Date.now();
   next();
 });
 
 // Hash password before saving
-userSchema.pre('save', async function(next: mongoose.CallbackWithoutResult) {
+userSchema.pre('save', async function(next) {
   // Only hash the password if it has been modified (or is new)
   if (!(this as any).isModified('password')) {
     return next();

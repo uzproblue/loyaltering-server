@@ -46,7 +46,7 @@ const notificationPermissionSchema = new Schema<NotificationPermissionDocument>(
 });
 
 // Update the updatedAt field before saving
-notificationPermissionSchema.pre('save', function(next: mongoose.CallbackWithoutResult) {
+notificationPermissionSchema.pre('save', function(next) {
   (this as any).updatedAt = Date.now();
   next();
 });

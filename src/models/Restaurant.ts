@@ -62,7 +62,7 @@ const restaurantSchema = new Schema<RestaurantDocument>({
 });
 
 // Update the updatedAt field before saving
-restaurantSchema.pre('save', function(next: mongoose.CallbackWithoutResult) {
+restaurantSchema.pre('save', function(next) {
   (this as any).updatedAt = Date.now();
   next();
 });

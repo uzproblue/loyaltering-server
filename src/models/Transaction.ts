@@ -53,7 +53,7 @@ transactionSchema.index({ customerId: 1, createdAt: -1 });
 transactionSchema.index({ restaurantId: 1, createdAt: -1 });
 
 // Pre-save hook to calculate balanceAfter
-transactionSchema.pre('save', async function(next: mongoose.CallbackWithoutResult) {
+transactionSchema.pre('save', async function(next) {
   // Only calculate if this is a new document and balanceAfter is not already set
   if (this.isNew && this.balanceAfter === undefined) {
     try {

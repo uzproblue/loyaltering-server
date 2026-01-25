@@ -52,7 +52,7 @@ const customerSchema = new Schema<CustomerDocument>({
 customerSchema.index({ restaurantId: 1, memberCode: 1 }, { unique: true, sparse: true });
 
 // Update the updatedAt field before saving
-customerSchema.pre('save', function(next: mongoose.CallbackWithoutResult) {
+customerSchema.pre('save', function(next) {
   (this as any).updatedAt = Date.now();
   next();
 });
