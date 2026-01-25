@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import express, { Express, Request, Response } from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import { createServer } from 'http';
@@ -15,6 +14,8 @@ import restaurantRoutes from './routes/restaurantRoutes';
 import transactionRoutes from './routes/transactionRoutes';
 import swaggerSpec from './config/swagger';
 import { initializeSocketIO } from './services/socketService';
+import { connectDB } from './utils/db';
+import { ensureDBConnection } from './middleware/dbCheck';
 
 const app: Express = express();
 const PORT: number = parseInt(process.env.PORT || '3000', 10);
@@ -65,6 +66,14 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'CMUS API Documentation',
 }));
 
+// Health check (no DB required)
+app.get('/health', (_req: Request, res: Response) => {
+  res.json({ status: 'OK', message: 'Server is running' });
+});
+
+// Ensure DB connection for all API routes
+app.use('/api', ensureDBConnection);
+
 // Routes
 app.use('/api/customers', customerRoutes);
 app.use('/api/auth', authRoutes);
@@ -73,56 +82,25 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/transactions', transactionRoutes);
 
-/**
- * @swagger
- * /health:
- *   get:
- *     summary: Health check endpoint
- *     tags: [Health]
- *     description: Check if the server is running
- *     responses:
- *       200:
- *         description: Server is running
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: OK
- *                 message:
- *                   type: string
- *                   example: Server is running
- */
-app.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'OK', message: 'Server is running' });
+// Initialize MongoDB connection (non-blocking for serverless)
+connectDB().catch((error: Error) => {
+  console.error('Failed to connect to MongoDB:', error);
+  // Don't exit in serverless - let requests handle the error
 });
 
-// MongoDB connection
-const MONGODB_URI: string = process.env.MONGODB_URI || 'mongodb://localhost:27017/cmus';
+// Create HTTP server
+const httpServer = createServer(app);
 
-// @ts-ignore - mongoose.connect() return type has version-specific differences
-mongoose.connect(MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    
-    // Create HTTP server
-    const httpServer = createServer(app);
-    
-    // Initialize Socket.io
-    initializeSocketIO(httpServer, corsOrigins);
-    
-    // Start server
-    httpServer.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`Socket.io server initialized`);
-    });
-  })
-  .catch((error: Error) => {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
+// Initialize Socket.io
+initializeSocketIO(httpServer, corsOrigins);
+
+// Start server (only if not in serverless environment)
+if (process.env.VERCEL !== '1') {
+  httpServer.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`Socket.io server initialized`);
   });
+}
 
 export default app;
 
