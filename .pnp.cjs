@@ -40,7 +40,7 @@ const RAW_RUNTIME_STATE =
           ["dotenv", "npm:16.6.1"],\
           ["express", "npm:4.22.1"],\
           ["jsonwebtoken", "npm:9.0.3"],\
-          ["mongoose", "npm:8.21.0"],\
+          ["mongoose", "npm:8.21.1"],\
           ["nodemon", "npm:3.1.11"],\
           ["socket.io", "npm:4.8.3"],\
           ["swagger-jsdoc", "npm:6.2.8"],\
@@ -2085,10 +2085,10 @@ const RAW_RUNTIME_STATE =
         ],\
         "linkType": "SOFT"\
       }],\
-      ["virtual:e8979b9a517d2d1777794ea10b0b694b86b68a6557fc7c3a0777a0d3626ac8c6e6701e7569b72a91714fb7721a22a79196ea569296f47c3250116291abea8d9d#npm:6.20.0", {\
-        "packageLocation": "./.yarn/__virtual__/mongodb-virtual-75fc650dd9/5/C:/Users/User/AppData/Local/Yarn/Berry/cache/mongodb-npm-6.20.0-5d66340ebb-10c0.zip/node_modules/mongodb/",\
+      ["virtual:fb8f9d7b7c897cd40b7c67cae083aa3a05d8d7d74de9e0ae19dfcebe1d6123180975661065317cc4bfe5d0cc54388926388ce334b46b1bc531e9ef99003bc1a9#npm:6.20.0", {\
+        "packageLocation": "./.yarn/__virtual__/mongodb-virtual-61e3980c65/5/C:/Users/User/AppData/Local/Yarn/Berry/cache/mongodb-npm-6.20.0-5d66340ebb-10c0.zip/node_modules/mongodb/",\
         "packageDependencies": [\
-          ["mongodb", "virtual:e8979b9a517d2d1777794ea10b0b694b86b68a6557fc7c3a0777a0d3626ac8c6e6701e7569b72a91714fb7721a22a79196ea569296f47c3250116291abea8d9d#npm:6.20.0"],\
+          ["mongodb", "virtual:fb8f9d7b7c897cd40b7c67cae083aa3a05d8d7d74de9e0ae19dfcebe1d6123180975661065317cc4bfe5d0cc54388926388ce334b46b1bc531e9ef99003bc1a9#npm:6.20.0"],\
           ["@aws-sdk/credential-providers", null],\
           ["@mongodb-js/saslprep", "npm:1.4.5"],\
           ["@mongodb-js/zstd", null],\
@@ -2138,13 +2138,13 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["mongoose", [\
-      ["npm:8.21.0", {\
-        "packageLocation": "../../../../C:/Users/User/AppData/Local/Yarn/Berry/cache/mongoose-npm-8.21.0-e8979b9a51-10c0.zip/node_modules/mongoose/",\
+      ["npm:8.21.1", {\
+        "packageLocation": "../../../../C:/Users/User/AppData/Local/Yarn/Berry/cache/mongoose-npm-8.21.1-fb8f9d7b7c-10c0.zip/node_modules/mongoose/",\
         "packageDependencies": [\
-          ["mongoose", "npm:8.21.0"],\
+          ["mongoose", "npm:8.21.1"],\
           ["bson", "npm:6.10.4"],\
           ["kareem", "npm:2.6.3"],\
-          ["mongodb", "virtual:e8979b9a517d2d1777794ea10b0b694b86b68a6557fc7c3a0777a0d3626ac8c6e6701e7569b72a91714fb7721a22a79196ea569296f47c3250116291abea8d9d#npm:6.20.0"],\
+          ["mongodb", "virtual:fb8f9d7b7c897cd40b7c67cae083aa3a05d8d7d74de9e0ae19dfcebe1d6123180975661065317cc4bfe5d0cc54388926388ce334b46b1bc531e9ef99003bc1a9#npm:6.20.0"],\
           ["mpath", "npm:0.9.0"],\
           ["mquery", "npm:5.0.0"],\
           ["ms", "npm:2.1.3"],\
@@ -2573,7 +2573,7 @@ const RAW_RUNTIME_STATE =
           ["dotenv", "npm:16.6.1"],\
           ["express", "npm:4.22.1"],\
           ["jsonwebtoken", "npm:9.0.3"],\
-          ["mongoose", "npm:8.21.0"],\
+          ["mongoose", "npm:8.21.1"],\
           ["nodemon", "npm:3.1.11"],\
           ["socket.io", "npm:4.8.3"],\
           ["swagger-jsdoc", "npm:6.2.8"],\
