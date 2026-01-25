@@ -85,12 +85,35 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Swagger Documentation
-const swaggerHandlers = swaggerUi.serve as any;
-// @ts-expect-error - swagger-ui-express has conflicting type definitions with express
-app.use('/api-docs', ...(Array.isArray(swaggerHandlers) ? swaggerHandlers : [swaggerHandlers]), swaggerUi.setup(swaggerSpec, {
+// Serve Swagger JSON spec
+app.get('/api-docs.json', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+// Setup Swagger UI with CDN assets (better for serverless/Vercel)
+const swaggerOptions = {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'CMUS API Documentation',
-}));
+  customJs: [
+    'https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js',
+    'https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js',
+  ],
+  customCssUrl: 'https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css',
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    url: '/api-docs.json',
+  },
+};
+
+// Get Swagger handlers
+const swaggerServe = swaggerUi.serve;
+const swaggerSetup = swaggerUi.setup(swaggerSpec, swaggerOptions);
+
+// Apply Swagger middleware
+// @ts-expect-error - swagger-ui-express has conflicting type definitions with express
+app.use('/api-docs', swaggerServe as any, swaggerSetup);
 
 // Health check (no DB required)
 app.get('/health', (_req: Request, res: Response) => {
