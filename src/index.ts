@@ -85,10 +85,38 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Swagger Documentation
-// Serve Swagger JSON spec
-app.get('/api-docs.json', (_req: Request, res: Response) => {
+// Serve Swagger JSON spec with dynamic server URL
+app.get('/api-docs.json', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
+  
+  // Get the base URL from the request or environment
+  let baseUrl: string;
+  
+  if (process.env.RENDER_EXTERNAL_URL) {
+    // Render provides the full URL
+    baseUrl = process.env.RENDER_EXTERNAL_URL;
+  } else if (process.env.VERCEL_URL) {
+    // Vercel provides the URL without protocol
+    baseUrl = `https://${process.env.VERCEL_URL}`;
+  } else {
+    // Development: use request protocol and host
+    const protocol = req.protocol || (req.secure ? 'https' : 'http');
+    const host = req.get('host') || `localhost:${process.env.PORT || 3000}`;
+    baseUrl = `${protocol}://${host}`;
+  }
+  
+  // Clone and update the swagger spec with the current server URL
+  const dynamicSpec = {
+    ...swaggerSpec,
+    servers: [
+      {
+        url: baseUrl,
+        description: process.env.RENDER_EXTERNAL_URL ? 'Production server' : process.env.VERCEL_URL ? 'Vercel deployment' : 'Development server',
+      },
+    ],
+  };
+  
+  res.send(dynamicSpec);
 });
 
 // Setup Swagger UI with CDN assets (better for serverless/Vercel)
