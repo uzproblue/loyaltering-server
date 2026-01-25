@@ -2,8 +2,8 @@ services:
   - type: web
     name: loyaltering-server
     env: node
-    buildCommand: corepack enable && corepack prepare yarn@4.5.0 --activate && yarn install && yarn build
-    startCommand: yarn start
+    buildCommand: corepack enable && corepack prepare yarn@4.5.0 --activate && yarn install && yarn build && ls -la dist/ || (echo "Build failed - dist folder not found" && exit 1)
+    startCommand: cd /opt/render/project && node dist/index.js
     envVars:
       - key: NODE_VERSION
         value: 22.22.0
