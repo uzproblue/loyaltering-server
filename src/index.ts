@@ -59,7 +59,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Swagger Documentation
-app.use('/api-docs', ...swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+const swaggerHandlers: express.RequestHandler[] = swaggerUi.serve as any;
+app.use('/api-docs', ...swaggerHandlers, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'CMUS API Documentation',
 }));

@@ -46,7 +46,7 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response) =
     });
   } catch (error) {
     console.error('Error fetching user profile:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -138,7 +138,7 @@ export const updateUserProfile = async (req: AuthenticatedRequest, res: Response
         message: Object.values(error.errors).map((err: any) => err.message).join(', '),
       });
     }
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -239,7 +239,7 @@ export const updateOnboardingStatus = async (req: AuthenticatedRequest, res: Res
     });
   } catch (error: any) {
     console.error('Error updating onboarding status:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -298,7 +298,7 @@ export const getTeamMembers = async (req: AuthenticatedRequest, res: Response) =
     });
   } catch (error) {
     console.error('Error fetching team members:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -452,7 +452,7 @@ export const inviteTeamMember = async (req: AuthenticatedRequest, res: Response)
         message: 'User with this email already exists'
       });
     }
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -603,7 +603,7 @@ export const updateTeamMember = async (req: AuthenticatedRequest, res: Response)
         message: 'Email already in use'
       });
     }
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
