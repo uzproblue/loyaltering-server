@@ -125,6 +125,17 @@ export interface RestaurantDocument extends Document {
   plan?: string;
   billingCycle?: 'Monthly' | 'Yearly';
   userId?: mongoose.Types.ObjectId;
+  signupPageConfig?: {
+    headerImage?: string;
+    welcomeTitle?: string;
+    description?: string;
+    formFields?: {
+      fullName: boolean;
+      birthday: boolean;
+      email: boolean;
+      phone: boolean;
+    };
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -154,6 +165,17 @@ export interface UpdateRestaurantRequest {
   country?: string;
   plan?: string;
   billingCycle?: 'Monthly' | 'Yearly';
+  signupPageConfig?: {
+    headerImage?: string;
+    welcomeTitle?: string;
+    description?: string;
+    formFields?: {
+      fullName?: boolean;
+      birthday?: boolean;
+      email?: boolean;
+      phone?: boolean;
+    };
+  };
 }
 
 export type TransactionType = 'REGISTRATION' | 'EARNED' | 'REDEEMED' | 'EXPIRED' | 'ADJUSTED' | 'REFUNDED';

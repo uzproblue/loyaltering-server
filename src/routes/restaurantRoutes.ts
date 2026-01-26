@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import * as restaurantController from '../controllers/restaurantController';
+import { authenticate } from '../middleware/auth';
 
 const router: Router = express.Router();
 
@@ -92,6 +93,25 @@ router.post('/', restaurantController.createRestaurant);
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/', restaurantController.getAllRestaurants);
+
+/**
+ * @swagger
+ * /api/restaurants/locations:
+ *   get:
+ *     summary: Get all locations for the current user's restaurant
+ *     tags: [Restaurants]
+ *     description: Retrieve all location Restaurant documents associated with the current user's restaurant
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Locations retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get('/locations', authenticate, restaurantController.getRestaurantLocations);
 
 /**
  * @swagger
@@ -202,5 +222,61 @@ router.get('/:id', restaurantController.getRestaurantById);
  *         description: Server error
  */
 router.put('/:id', restaurantController.updateRestaurant);
+
+/**
+ * @swagger
+ * /api/restaurants/locations:
+ *   post:
+ *     summary: Create a new location and operator
+ *     tags: [Restaurants]
+ *     description: Create a new location (Restaurant document) and an operator user for that location
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - storeName
+ *               - address
+ *               - category
+ *               - operatorName
+ *               - operatorEmail
+ *             properties:
+ *               storeName:
+ *                 type: string
+ *                 example: "Downtown Flagship Store"
+ *               address:
+ *                 type: string
+ *                 example: "123 Main St, City, State 12345"
+ *               category:
+ *                 type: string
+ *                 example: "Retail"
+ *               operatorName:
+ *                 type: string
+ *                 example: "John Doe"
+ *               operatorEmail:
+ *                 type: string
+ *                 example: "john@example.com"
+ *               autoInvite:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       201:
+ *         description: Location and operator created successfully
+ *       400:
+ *         description: Validation error or missing required fields
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Only admins can create locations
+ *       409:
+ *         description: User with this email already exists
+ *       500:
+ *         description: Server error
+ */
+router.post('/locations', authenticate, restaurantController.createLocation);
 
 export default router;

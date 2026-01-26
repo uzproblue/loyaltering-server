@@ -51,6 +51,40 @@ const restaurantSchema = new Schema<RestaurantDocument>({
     ref: 'User',
     index: true
   },
+  signupPageConfig: {
+    headerImage: {
+      type: String,
+      trim: true
+    },
+    welcomeTitle: {
+      type: String,
+      trim: true,
+      default: 'Join our rewards program'
+    },
+    description: {
+      type: String,
+      trim: true,
+      default: 'Earn points for every purchase and unlock exclusive rewards. It\'s free and easy to join!'
+    },
+    formFields: {
+      fullName: {
+        type: Boolean,
+        default: true
+      },
+      birthday: {
+        type: Boolean,
+        default: true
+      },
+      email: {
+        type: Boolean,
+        default: true
+      },
+      phone: {
+        type: Boolean,
+        default: false
+      }
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now
