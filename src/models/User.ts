@@ -58,6 +58,14 @@ const userSchema = new Schema<UserDocument>({
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
+  resetPasswordToken: {
+    type: String,
+    default: undefined
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: undefined
+  },
   createdAt: {
     type: Date,
     default: Date.now

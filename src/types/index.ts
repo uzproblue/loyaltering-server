@@ -46,6 +46,8 @@ export interface UserDocument extends Document {
   onboardingCompleted?: boolean;
   locationAccess?: string[];
   invitedBy?: mongoose.Types.ObjectId;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -61,6 +63,15 @@ export interface RegisterRequest {
 export interface LoginRequest {
   email: string;
   password: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
 }
 
 export interface CreateCustomerRequest {

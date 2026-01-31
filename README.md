@@ -22,6 +22,21 @@ JWT_SECRET=your-secret-key-here-change-in-production
 CORS_ORIGIN=http://localhost:3000,http://localhost:3001
 ```
 
+### Twilio / Email (SendGrid)
+
+Transactional email (welcome email on registration, password reset) uses **SendGrid** (Twilio’s email API). Configure these in `.env`:
+
+| Variable | Description |
+|----------|-------------|
+| `SENDGRID_API_KEY` | SendGrid API key (create in SendGrid dashboard). Required for sending email. |
+| `FROM_EMAIL` | Verified sender email in SendGrid (e.g. `noreply@yourdomain.com`). |
+| `APP_URL` | Base URL of the platform app (e.g. `https://yourapp.com`). Used for password-reset links. |
+| `APP_NAME` | Optional. App name used in email copy (default: `Loyaltering`). |
+
+The sender (`FROM_EMAIL`) must be verified in SendGrid (single sender or domain authentication). If `SENDGRID_API_KEY` is not set, welcome and password-reset emails are skipped and a warning is logged.
+
+**Extensibility:** Future Twilio features (SMS, Verify for 2FA, etc.) can be added via new server services and env vars (e.g. `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`) without changing the existing email flow.
+
 Generate a JWT secret:
 ```bash
 openssl rand -base64 32
@@ -152,4 +167,5 @@ server/
 - Platform users have roles: 'admin' or 'user' (default: 'user')
 - The server uses CORS middleware to allow cross-origin requests from the platform app
 - All user responses exclude password fields for security
+- **Email:** Registration sends a welcome email (SendGrid); forgot-password sends a reset link. Reset tokens expire in 1 hour.
 

@@ -1,8 +1,10 @@
 import { Response } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../models/User';
 import Restaurant from '../models/Restaurant';
-import { ApiResponse, RegisterRequest, LoginRequest, TypedRequest } from '../types';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/emailService';
+import { ApiResponse, RegisterRequest, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest, TypedRequest } from '../types';
 
 // Generate JWT token
 const generateToken = (userId: string, email: string, role: 'admin' | 'user'): string => {
@@ -85,7 +87,14 @@ export const register = async (
     // Update user with restaurantId
     savedUser.restaurantId = savedRestaurant._id;
     await savedUser.save();
-    
+
+    // Send welcome email asynchronously (do not block or fail response)
+    setImmediate(() => {
+      sendWelcomeEmail(savedUser.email, savedUser.name).catch((err) =>
+        console.error('[authController] register sendWelcomeEmail:', err)
+      );
+    });
+
     // Remove password from response
     const userResponse = savedUser.toObject();
     delete (userResponse as any).password;
@@ -199,6 +208,114 @@ export const login = async (
     res.status(500).json({
       success: false,
       message: 'Error logging in user',
+      error: error.message
+    });
+  }
+};
+
+const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+const GENERIC_FORGOT_MESSAGE = 'If an account exists for this email, you will receive a reset link.';
+
+// Forgot password: send reset link (always 200 with generic message)
+export const forgotPassword = async (
+  req: TypedRequest<ForgotPasswordRequest>,
+  res: Response<ApiResponse>
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email || typeof email !== 'string') {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide an email address'
+      });
+      return;
+    }
+
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
+    if (user) {
+      const token = crypto.randomBytes(32).toString('hex');
+      user.resetPasswordToken = token;
+      user.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS);
+      await user.save();
+
+      const appUrl = (process.env.APP_URL || '').replace(/\/$/, '');
+      const resetLink = appUrl ? `${appUrl}/reset-password?token=${token}` : '';
+
+      if (resetLink) {
+        setImmediate(() => {
+          sendPasswordResetEmail(user.email, resetLink).catch((err) =>
+            console.error('[authController] forgotPassword sendPasswordResetEmail:', err)
+          );
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: GENERIC_FORGOT_MESSAGE
+    });
+  } catch (error: any) {
+    console.error('Error in forgotPassword:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong. Please try again later.',
+      error: error.message
+    });
+  }
+};
+
+// Reset password: validate token and set new password
+export const resetPassword = async (
+  req: TypedRequest<ResetPasswordRequest>,
+  res: Response<ApiResponse>
+): Promise<void> => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      res.status(400).json({
+        success: false,
+        message: 'Token and new password are required'
+      });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long'
+      });
+      return;
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }
+    }).select('+password');
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset link. Please request a new password reset.'
+      });
+      return;
+    }
+
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password has been reset successfully. You can now sign in.'
+    });
+  } catch (error: any) {
+    console.error('Error in resetPassword:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong. Please try again later.',
       error: error.message
     });
   }
