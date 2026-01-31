@@ -6,6 +6,7 @@ import Transaction from '../models/Transaction';
 import { ApiResponse, CreateCustomerRequest, TypedRequest } from '../types';
 import { calculateCustomerBalance } from './transactionController';
 import { emitTransactionEvent } from '../services/socketService';
+import { sendCustomerWelcomeEmail } from '../services/emailService';
 
 function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, '');
@@ -115,6 +116,25 @@ export const createCustomer = async (
         customer: transactionWithCustomer.customerId
       });
     }
+
+    // Send customer welcome email with member ID and QR code (fire-and-forget)
+    setImmediate(async () => {
+      try {
+        let restaurantName: string | undefined;
+        if (savedCustomer.restaurantId) {
+          const restaurant = await Restaurant.findById(savedCustomer.restaurantId).select('name').lean();
+          restaurantName = restaurant?.name;
+        }
+        await sendCustomerWelcomeEmail(
+          savedCustomer.email,
+          savedCustomer.name,
+          savedCustomer.memberCode!,
+          restaurantName
+        );
+      } catch (err: any) {
+        console.error('[customerController] sendCustomerWelcomeEmail:', err?.message ?? err);
+      }
+    });
 
     const customerResponse = savedCustomer.toObject();
 
