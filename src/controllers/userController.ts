@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import Restaurant from '../models/Restaurant';
 import { AuthenticatedRequest } from '../middleware/auth';
+import { sendTeamMemberInviteEmail } from '../services/emailService';
 
 /**
  * Get current user profile
@@ -423,6 +424,11 @@ export const inviteTeamMember = async (req: AuthenticatedRequest, res: Response)
     });
 
     await newUser.save();
+
+    // Send invitation email with password and instructions (fire-and-forget)
+    sendTeamMemberInviteEmail(newUser.email, newUser.name, generatedPassword).catch((err) =>
+      console.error('[userController] inviteTeamMember sendTeamMemberInviteEmail:', err)
+    );
 
     // Return user data with generated password (for admin to share)
     return res.status(201).json({

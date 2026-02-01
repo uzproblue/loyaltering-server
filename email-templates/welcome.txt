@@ -1,0 +1,10 @@
+Hi {{name}},
+
+Welcome to {{APP_NAME}}. Congratulations on taking the first step to increase repeat visits and build customer loyalty. We're excited to have you on board!
+
+Quick Setup Guide: Create your first campaign, add your location, and invite your team.
+
+Go to Dashboard: {{dashboardUrl}}
+
+Best regards,
+The {{APP_NAME}} Team

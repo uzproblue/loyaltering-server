@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome – your member ID</title>
+</head>
+<body style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <p>Hi {{name}},</p>
+  <p>{{welcomeLine}}</p>
+  <p><strong>Your Member ID: {{memberCode}}</strong></p>
+  <p>Keep the QR code below to show at the counter. You can also use this member ID when asked.</p>
+  <p><img src="cid:memberqrcode" alt="Member QR Code" width="200" height="200" style="display:block;margin:12px 0;" /></p>
+  <p>Best regards,<br/>The {{APP_NAME}} Team</p>
+</body>
+</html>

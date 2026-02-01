@@ -1,0 +1,13 @@
+Hi {{name}},
+
+You've been invited to join {{APP_NAME}} as a team member.
+
+Instructions:
+{{instructions}}
+
+Your temporary password: {{temporaryPassword}}
+
+Please keep this password secure and change it after your first login.
+
+Best regards,
+The {{APP_NAME}} Team

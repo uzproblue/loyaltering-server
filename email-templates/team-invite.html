@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>You're invited to {{APP_NAME}}</title>
+</head>
+<body style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <p>Hi {{name}},</p>
+  <p>You've been invited to join <strong>{{APP_NAME}}</strong> as a team member.</p>
+  <p><strong>Instructions:</strong></p>
+  {{instructionsHtml}}
+  <p><strong>Your temporary password:</strong> <code style="background:#f0f0f0;padding:4px 8px;border-radius:4px;">{{temporaryPassword}}</code></p>
+  <p>Please keep this password secure and change it after your first login.</p>
+  <p>Best regards,<br/>The {{APP_NAME}} Team</p>
+</body>
+</html>

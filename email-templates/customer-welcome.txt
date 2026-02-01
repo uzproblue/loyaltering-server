@@ -1,0 +1,10 @@
+Hi {{name}},
+
+{{welcomeLine}}
+
+Your Member ID: {{memberCode}}
+
+Keep the QR code below to show at the counter. You can also use this member ID when asked.
+
+Best regards,
+The {{APP_NAME}} Team
