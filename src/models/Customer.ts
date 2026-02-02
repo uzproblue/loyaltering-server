@@ -4,7 +4,7 @@ import { CustomerDocument } from '../types';
 const customerSchema = new Schema<CustomerDocument>({
   name: {
     type: String,
-    required: [true, 'Name is required'],
+    required: false,
     trim: true
   },
   email: {
@@ -17,7 +17,7 @@ const customerSchema = new Schema<CustomerDocument>({
   },
   phone: {
     type: String,
-    required: [true, 'Phone number is required'],
+    required: false,
     trim: true
   },
   phoneNormalized: {
@@ -31,7 +31,7 @@ const customerSchema = new Schema<CustomerDocument>({
   },
   dateOfBirth: {
     type: Date,
-    required: [true, 'Date of Birth is required']
+    required: false
   },
   restaurantId: {
     type: String,

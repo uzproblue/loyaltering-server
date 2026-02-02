@@ -34,11 +34,21 @@ export const createCustomer = async (
   try {
     const { name, email, phone, dateOfBirth, restaurantId } = req.body;
 
-    // Validate required fields
-    if (!name || !email || !phone || !dateOfBirth) {
+    // Only email is required
+    if (!email || typeof email !== 'string' || email.trim() === '') {
       res.status(400).json({
         success: false,
-        message: 'Please provide name, email, phone number, and date of birth'
+        message: 'Please provide a valid email address'
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(email.trim())) {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address'
       });
       return;
     }
@@ -52,14 +62,17 @@ export const createCustomer = async (
       return;
     }
 
-    // Validate date of birth format
-    const dob = new Date(dateOfBirth);
-    if (isNaN(dob.getTime())) {
-      res.status(400).json({
-        success: false,
-        message: 'Invalid date of birth format'
-      });
-      return;
+    // Validate date of birth format if provided
+    let dob: Date | undefined;
+    if (dateOfBirth) {
+      dob = new Date(dateOfBirth);
+      if (isNaN(dob.getTime())) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid date of birth format'
+        });
+        return;
+      }
     }
 
     // Check if customer already exists
@@ -73,18 +86,30 @@ export const createCustomer = async (
     }
 
     // Create new customer
-    const phoneNormalized = normalizePhone(phone);
+    const phoneNormalized = phone ? normalizePhone(phone) : undefined;
     const memberCode = await generateMemberCode(restaurantId || undefined);
 
-    const customer = new Customer({
-      name,
-      email,
-      phone,
-      phoneNormalized,
+    const customerData: any = {
+      email: email.trim().toLowerCase(),
       memberCode,
-      dateOfBirth: dob,
       restaurantId: restaurantId || undefined
-    });
+    };
+
+    // Add optional fields only if provided
+    if (name && typeof name === 'string' && name.trim() !== '') {
+      customerData.name = name.trim();
+    }
+
+    if (phone && typeof phone === 'string' && phone.trim() !== '') {
+      customerData.phone = phone.trim();
+      customerData.phoneNormalized = phoneNormalized;
+    }
+
+    if (dob) {
+      customerData.dateOfBirth = dob;
+    }
+
+    const customer = new Customer(customerData);
 
     const savedCustomer = await customer.save();
     
@@ -125,9 +150,11 @@ export const createCustomer = async (
           const restaurant = await Restaurant.findById(savedCustomer.restaurantId).select('name').lean();
           restaurantName = restaurant?.name;
         }
+        // Use name if available, otherwise use email or a default
+        const customerName = savedCustomer.name || savedCustomer.email.split('@')[0] || 'Customer';
         await sendCustomerWelcomeEmail(
           savedCustomer.email,
-          savedCustomer.name,
+          customerName,
           savedCustomer.memberCode!,
           restaurantName
         );

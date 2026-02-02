@@ -75,10 +75,10 @@ export interface ResetPasswordRequest {
 }
 
 export interface CreateCustomerRequest {
-  name: string;
+  name?: string;
   email: string;
-  phone: string;
-  dateOfBirth: string;
+  phone?: string;
+  dateOfBirth?: string;
   restaurantId?: string;
 }
 
