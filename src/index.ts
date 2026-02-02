@@ -43,13 +43,19 @@ const corsOriginFunction = (origin: string | undefined, callback: (err: Error | 
     return callback(null, true);
   }
 
+  // Allow loyaltering.online domains
+  const loyalteringPattern = /^https:\/\/.*\.loyaltering\.online$/;
+  if (loyalteringPattern.test(origin)) {
+    return callback(null, true);
+  }
+
   // Also allow the specific Vercel domain
   if (origin === 'https://customer-app-hazel.vercel.app') {
     return callback(null, true);
   }
 
   // Allow the server's own domain (for API docs)
-  if (origin.includes('loyaltering-server.vercel.app')) {
+  if (origin.includes('loyaltering-server.vercel.app') || origin.includes('loyaltering-server.onrender.com')) {
     return callback(null, true);
   }
 

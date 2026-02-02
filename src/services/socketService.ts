@@ -12,6 +12,7 @@ export const initializeSocketIO = (httpServer: HTTPServer, corsOrigins: string[]
     ...corsOrigins,
     'https://customer-app-hazel.vercel.app',
     /^https:\/\/.*\.vercel\.app$/, // Allow all Vercel preview deployments
+    /^https:\/\/.*\.loyaltering\.online$/, // Allow all loyaltering.online domains
   ];
 
   io = new SocketIOServer(httpServer, {
