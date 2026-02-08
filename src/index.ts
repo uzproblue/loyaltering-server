@@ -147,7 +147,6 @@ const swaggerServe = swaggerUi.serve;
 const swaggerSetup = swaggerUi.setup(swaggerSpec, swaggerOptions);
 
 // Apply Swagger middleware
-// @ts-expect-error - swagger-ui-express has conflicting type definitions with express
 app.use('/api-docs', swaggerServe as any, swaggerSetup);
 
 // Health check (no DB required)

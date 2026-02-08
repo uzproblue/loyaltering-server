@@ -28,7 +28,7 @@ const upload = multer({
 router.post(
   '/image',
   authenticate,
-  (req, res, next) => {
+  (req: any, res: any, next: any) => {
     const contentType = req.headers['content-type'] || '';
     if (contentType.startsWith('multipart/form-data')) {
       return upload.single('image')(req, res, (err: any) => {
@@ -47,13 +47,10 @@ router.post(
 );
 
 /**
- * GET /api/upload/files/:key - redirect to presigned URL (for private bucket).
- * Key can contain slashes, e.g. avatars/userId_timestamp.jpg
- * Uses regex to avoid PathParams type conflict with swagger-ui-express.
+ * GET /api/upload/files/:encodedKey - redirect to presigned URL (for private bucket).
+ * encodedKey is base64url of the R2 key (key can contain slashes, e.g. avatars/userId_timestamp.jpg).
+ * String path only to avoid PathParams/RegExp type conflict with @types/swagger-ui-express.
  */
-router.get(/^\/files\/(.+)$/, (req, res, next) => {
-  (req as any).params = { key: (req.params as any)[0] ?? req.params.key };
-  return getFileByKey(req as any, res);
-});
+router.get('/files/:encodedKey', getFileByKey);
 
 export default router;

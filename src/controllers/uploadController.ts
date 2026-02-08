@@ -74,7 +74,8 @@ export const uploadImage = async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
-    const type = (req.query.type as string) || (req.body?.type as string);
+    const body = (req as AuthenticatedRequest & { body?: { image?: string; type?: string; restaurantId?: string } }).body;
+    const type = ((req as any).query?.type as string) || (body?.type as string);
     if (!type || !['avatar', 'restaurant-header', 'notification'].includes(type)) {
       res.status(400).json({
         success: false,
@@ -85,10 +86,10 @@ export const uploadImage = async (req: AuthenticatedRequest, res: Response): Pro
 
     let buffer: Buffer;
     let contentType: string;
-    const resolvedUserId = userId || (await User.findOne({ email: userEmail }).select('_id').then((u) => u?._id?.toString()));
+    const resolvedUserId = userId || (await User.findOne({ email: userEmail }).select('_id').then((u: { _id?: { toString(): string } } | null) => u?._id?.toString()));
 
-    if (req.body?.image && typeof req.body.image === 'string') {
-      const parsed = parseBase64Image(req.body.image);
+    if (body?.image && typeof body.image === 'string') {
+      const parsed = parseBase64Image(body.image);
       buffer = parsed.buffer;
       contentType = parsed.contentType;
     } else if ((req as any).file?.buffer) {
@@ -115,7 +116,7 @@ export const uploadImage = async (req: AuthenticatedRequest, res: Response): Pro
 
     let restaurantId: string | undefined;
     if (type === 'restaurant-header') {
-      restaurantId = (req.body?.restaurantId || req.query.restaurantId) as string;
+      restaurantId = (body?.restaurantId || (req as any).query?.restaurantId) as string;
       if (!restaurantId) {
         res.status(400).json({ success: false, message: 'restaurantId is required for restaurant-header upload' });
         return;
@@ -149,7 +150,7 @@ export const uploadImage = async (req: AuthenticatedRequest, res: Response): Pro
 
 /**
  * Redirect to presigned URL for private bucket.
- * GET /api/upload/files/:key - key can contain slashes (e.g. avatars/user_123.jpg)
+ * GET /api/upload/files/:encodedKey - encodedKey is base64url of the R2 key (e.g. avatars/user_123.jpg).
  */
 export const getFileByKey = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -157,11 +158,15 @@ export const getFileByKey = async (req: AuthenticatedRequest, res: Response): Pr
       res.status(503).json({ success: false, message: 'File serving is not configured' });
       return;
     }
-    const key = (req.params as any).key;
-    if (!key) {
-      res.status(400).json({ success: false, message: 'Missing key' });
+    const encodedKey = (req as any).params?.encodedKey;
+    if (!encodedKey) {
+      res.status(400).json({ success: false, message: 'Missing encodedKey' });
       return;
     }
+    const key = Buffer.from(
+      encodedKey.replace(/-/g, '+').replace(/_/g, '/'),
+      'base64'
+    ).toString('utf8');
     const url = await getPresignedUrl(key);
     res.redirect(302, url);
   } catch (err: any) {
