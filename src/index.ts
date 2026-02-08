@@ -12,6 +12,7 @@ import userRoutes from './routes/userRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import restaurantRoutes from './routes/restaurantRoutes';
 import transactionRoutes from './routes/transactionRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 import swaggerSpec from './config/swagger';
 import { initializeSocketIO } from './services/socketService';
 import { connectDB } from './utils/db';
@@ -164,6 +165,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Initialize MongoDB connection (non-blocking for serverless)
 connectDB().catch((error: Error) => {

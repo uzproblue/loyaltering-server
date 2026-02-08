@@ -4,6 +4,7 @@ import User from '../models/User';
 import Restaurant from '../models/Restaurant';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { sendTeamMemberInviteEmail } from '../services/emailService';
+import { resolveImageUrl } from '../services/r2Service';
 
 /**
  * Get current user profile
@@ -29,6 +30,8 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response) =
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    const avatarUrl = await resolveImageUrl((user as any).avatar || '');
+
     return res.json({
       success: true,
       data: {
@@ -37,7 +40,7 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response) =
         email: user.email,
         businessName: user.businessName,
         bio: (user as any).bio || '',
-        avatar: (user as any).avatar || '',
+        avatar: avatarUrl,
         role: user.role,
         restaurantId: (user as any).restaurantId ? (user as any).restaurantId.toString() : undefined,
         onboardingCompleted: (user as any).onboardingCompleted || false,
@@ -93,15 +96,14 @@ export const updateUserProfile = async (req: AuthenticatedRequest, res: Response
     if (email) updateData.email = email.toLowerCase().trim();
     if (bio !== undefined) updateData.bio = bio || '';
     if (avatar !== undefined) {
-      // Limit avatar size to prevent database issues (base64 can be large)
-      // In production, consider storing images in cloud storage instead
-      if (avatar && avatar.length > 1000000) { // ~1MB limit
+      const value = typeof avatar === 'string' ? avatar.trim() : '';
+      if (value.startsWith('data:') && value.length > 2000) {
         return res.status(400).json({
           success: false,
-          message: 'Avatar image is too large. Please use an image smaller than 1MB.',
+          message: 'Please upload avatar via POST /api/upload/image?type=avatar and use the returned key or url',
         });
       }
-      updateData.avatar = avatar || '';
+      updateData.avatar = value;
     }
 
     user = await User.findByIdAndUpdate(
@@ -114,6 +116,8 @@ export const updateUserProfile = async (req: AuthenticatedRequest, res: Response
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    const avatarUrl = await resolveImageUrl((user as any).avatar || '');
+
     return res.json({
       success: true,
       message: 'Profile updated successfully',
@@ -123,7 +127,7 @@ export const updateUserProfile = async (req: AuthenticatedRequest, res: Response
         email: user.email,
         businessName: user.businessName,
         bio: (user as any).bio || '',
-        avatar: (user as any).avatar || '',
+        avatar: avatarUrl,
         role: user.role,
         restaurantId: (user as any).restaurantId ? (user as any).restaurantId.toString() : undefined,
         onboardingCompleted: (user as any).onboardingCompleted || false,
@@ -285,17 +289,21 @@ export const getTeamMembers = async (req: AuthenticatedRequest, res: Response) =
       .select('-password')
       .sort({ createdAt: -1 });
 
-    return res.json({
-      success: true,
-      data: teamMembers.map((user: any) => ({
+    const membersWithAvatars = await Promise.all(
+      teamMembers.map(async (user: any) => ({
         id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role,
-        avatar: (user as any).avatar || '',
+        avatar: await resolveImageUrl((user as any).avatar || ''),
         locationAccess: (user as any).locationAccess || [],
         createdAt: user.createdAt,
-      })),
+      }))
+    );
+
+    return res.json({
+      success: true,
+      data: membersWithAvatars,
     });
   } catch (error) {
     console.error('Error fetching team members:', error);
