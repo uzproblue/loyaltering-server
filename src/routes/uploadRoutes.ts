@@ -38,10 +38,10 @@ router.post(
           }
           return res.status(400).json({ success: false, message: err.message || 'File upload error' });
         }
-        next();
+        return next();
       });
     }
-    next();
+    return next();
   },
   uploadImage
 );
@@ -49,7 +49,11 @@ router.post(
 /**
  * GET /api/upload/files/:key - redirect to presigned URL (for private bucket).
  * Key can contain slashes, e.g. avatars/userId_timestamp.jpg
+ * Uses regex to avoid PathParams type conflict with swagger-ui-express.
  */
-router.get('/files/:key(*)', getFileByKey);
+router.get(/^\/files\/(.+)$/, (req, res, next) => {
+  (req as any).params = { key: (req.params as any)[0] ?? req.params.key };
+  return getFileByKey(req as any, res);
+});
 
 export default router;

@@ -128,7 +128,7 @@ export const uploadImage = async (req: AuthenticatedRequest, res: Response): Pro
       }
     }
 
-    const key = buildKey(type, resolvedUserId || userId || 'anon', ext, restaurantId, undefined);
+    const key = buildKey(type as UploadImageType, resolvedUserId || userId || 'anon', ext, restaurantId, undefined);
 
     const result = await uploadBuffer(key, buffer, contentType);
 
