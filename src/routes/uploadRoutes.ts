@@ -49,11 +49,11 @@ router.post(
 /**
  * GET /api/upload/files/:key - redirect to presigned URL (for private bucket).
  * Key can contain slashes, e.g. avatars/userId_timestamp.jpg
- * Uses regex to avoid PathParams type conflict with swagger-ui-express.
+ * Cast to any to avoid PathParams (RegExp) vs string conflict with @types/swagger-ui-express.
  */
-router.get(/^\/files\/(.+)$/, (req, res, next) => {
-  (req as any).params = { key: (req.params as any)[0] ?? req.params.key };
-  return getFileByKey(req as any, res);
+(router as any).get(/^\/files\/(.+)$/, (req: any, res: any) => {
+  req.params = { key: req.params[0] ?? req.params.key };
+  return getFileByKey(req, res);
 });
 
 export default router;
