@@ -13,10 +13,12 @@ import notificationRoutes from './routes/notificationRoutes';
 import restaurantRoutes from './routes/restaurantRoutes';
 import transactionRoutes from './routes/transactionRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import stripeRoutes from './routes/stripeRoutes';
 import swaggerSpec from './config/swagger';
 import { initializeSocketIO } from './services/socketService';
 import { connectDB } from './utils/db';
 import { ensureDBConnection } from './middleware/dbCheck';
+import { handleWebhook } from './controllers/stripeController';
 
 const app: Express = express();
 const PORT: number = parseInt(process.env.PORT || '3000', 10);
@@ -88,6 +90,12 @@ app.options('*', cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Email']
 }));
+
+// Stripe webhook must receive raw body for signature verification (before json parser)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const bodyParser = require('body-parser');
+app.use('/api/stripe/webhook', bodyParser.raw({ type: 'application/json' }), (req: Request, res: Response) => handleWebhook(req, res));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -165,6 +173,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 // Initialize PostgreSQL (Neon) connection (non-blocking for serverless)
 connectDB().catch((error: Error) => {

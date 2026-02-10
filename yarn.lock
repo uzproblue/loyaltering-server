@@ -4073,6 +4073,7 @@ __metadata:
     prisma: "npm:^6.9.0"
     qrcode: "npm:^1.5.3"
     socket.io: "npm:^4.7.2"
+    stripe: "npm:^20.3.1"
     swagger-jsdoc: "npm:^6.2.8"
     swagger-ui-express: "npm:^5.0.0"
     ts-node-dev: "npm:^2.0.0"
@@ -4295,6 +4296,18 @@ __metadata:
   version: 2.0.1
   resolution: "strip-json-comments@npm:2.0.1"
   checksum: 10c0/b509231cbdee45064ff4f9fd73609e2bcc4e84a4d508e9dd0f31f70356473fde18abfb5838c17d56fb236f5a06b102ef115438de0600b749e818a35fbbc48c43
+  languageName: node
+  linkType: hard
+
+"stripe@npm:^20.3.1":
+  version: 20.3.1
+  resolution: "stripe@npm:20.3.1"
+  peerDependencies:
+    "@types/node": ">=16"
+  peerDependenciesMeta:
+    "@types/node":
+      optional: true
+  checksum: 10c0/86d53dd008c4f768344c409fbdf00179305e4fd62dbcae8d751af862a022e028fed29ee5f6392651992550502c1835e336a1e493dd3fafb079f0ded401f9baf1
   languageName: node
   linkType: hard
 

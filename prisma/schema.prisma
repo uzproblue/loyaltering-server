@@ -63,12 +63,15 @@ model Restaurant {
   category        String?
   locations       String?
   country         String?
-  plan            String?
-  billingCycle    BillingCycle?
-  userId          String?      // owner user id (admin who created)
-  signupPageConfig Json?       // { headerImage, welcomeTitle, description, formFields: { fullName, birthday, email, phone } }
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  plan                  String?
+  billingCycle          BillingCycle?
+  userId                String?      // owner user id (admin who created)
+  stripeCustomerId      String?      @unique
+  stripeSubscriptionId String?
+  subscriptionStatus   String?      // active, past_due, canceled, incomplete, etc.
+  signupPageConfig      Json?        // { headerImage, welcomeTitle, description, formFields: { fullName, birthday, email, phone } }
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 
   owner      User?     @relation("RestaurantOwner", fields: [userId], references: [id])
   users      User[]    @relation("UserRestaurant")
