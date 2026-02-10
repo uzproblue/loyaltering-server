@@ -1,0 +1,134 @@
+// Prisma schema for PostgreSQL (Neon)
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  user
+}
+
+enum BillingCycle {
+  Monthly
+  Yearly
+}
+
+enum TransactionType {
+  REGISTRATION
+  EARNED
+  REDEEMED
+  EXPIRED
+  ADJUSTED
+  REFUNDED
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  password             String
+  name                 String
+  businessName         String?
+  bio                  String?   @default("")
+  avatar               String?   @default("")
+  role                 UserRole  @default(user)
+  restaurantId         String?
+  onboardingCompleted  Boolean   @default(false)
+  locationAccess       String[]  @default([])
+  invitedBy            String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  restaurant   Restaurant?  @relation("UserRestaurant", fields: [restaurantId], references: [id])
+  invitedByUser User?      @relation("UserInvites", fields: [invitedBy], references: [id])
+  invitedUsers  User[]     @relation("UserInvites")
+  restaurantsOwned Restaurant[] @relation("RestaurantOwner")
+}
+
+model Restaurant {
+  id              String       @id @default(cuid())
+  name            String
+  address         String?
+  phone           String?
+  email           String?
+  description     String?
+  category        String?
+  locations       String?
+  country         String?
+  plan            String?
+  billingCycle    BillingCycle?
+  userId          String?      // owner user id (admin who created)
+  signupPageConfig Json?       // { headerImage, welcomeTitle, description, formFields: { fullName, birthday, email, phone } }
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  owner      User?     @relation("RestaurantOwner", fields: [userId], references: [id])
+  users      User[]    @relation("UserRestaurant")
+  customers  Customer[]
+  transactions Transaction[]
+  notificationPermissions NotificationPermission[]
+}
+
+model Customer {
+  id              String    @id @default(cuid())
+  name            String?
+  email           String    @unique
+  phone           String?
+  phoneNormalized String?
+  memberCode      String?
+  dateOfBirth     DateTime?
+  restaurantId    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  restaurant   Restaurant?   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  notificationPermissions NotificationPermission[]
+
+  @@unique([restaurantId, memberCode])
+  @@index([restaurantId])
+  @@index([phoneNormalized])
+}
+
+model Transaction {
+  id           String          @id @default(cuid())
+  customerId   String
+  restaurantId String
+  type         TransactionType
+  amount       Float
+  description  String
+  balanceAfter Float?
+  metadata     Json?           @default("{}")
+  createdBy    String?
+  createdAt    DateTime        @default(now())
+
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt(sort: Desc)])
+  @@index([restaurantId, createdAt(sort: Desc)])
+}
+
+model NotificationPermission {
+  id                 String   @id @default(cuid())
+  customerId         String
+  restaurantId       String
+  permissionGranted  Boolean  @default(false)
+  pushSubscription   Json?    // { endpoint, keys: { p256dh, auth } }
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, restaurantId])
+  @@index([restaurantId])
+}

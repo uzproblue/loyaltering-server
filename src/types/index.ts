@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
-import { Document } from 'mongoose';
-import mongoose from 'mongoose';
+import type { User, Customer, Restaurant, Transaction, NotificationPermission } from '@prisma/client';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -22,36 +21,12 @@ export interface TypedResponse<T = any> extends Response {
   json: (body: ApiResponse<T>) => this;
 }
 
-export interface CustomerDocument extends Document {
-  name: string;
-  email: string;
-  phone: string;
-  phoneNormalized?: string;
-  memberCode?: string;
-  dateOfBirth: Date;
-  restaurantId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface UserDocument extends Document {
-  email: string;
-  password: string;
-  name: string;
-  businessName?: string;
-  bio?: string;
-  avatar?: string;
-  role: 'admin' | 'user';
-  restaurantId?: mongoose.Types.ObjectId;
-  onboardingCompleted?: boolean;
-  locationAccess?: string[];
-  invitedBy?: mongoose.Types.ObjectId;
-  resetPasswordToken?: string;
-  resetPasswordExpires?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  comparePassword(candidatePassword: string): Promise<boolean>;
-}
+// Re-export Prisma model types for use across the app (ids are string)
+export type CustomerDocument = Customer;
+export type UserDocument = User;
+export type RestaurantDocument = Restaurant;
+export type TransactionDocument = Transaction;
+export type NotificationPermissionDocument = NotificationPermission;
 
 export interface RegisterRequest {
   fullName: string;
@@ -82,21 +57,6 @@ export interface CreateCustomerRequest {
   restaurantId?: string;
 }
 
-export interface NotificationPermissionDocument extends Document {
-  customerId: mongoose.Types.ObjectId;
-  restaurantId: string;
-  permissionGranted: boolean;
-  pushSubscription?: {
-    endpoint: string;
-    keys: {
-      p256dh: string;
-      auth: string;
-    };
-  };
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export interface CreateNotificationPermissionRequest {
   customerId: string;
   restaurantId: string;
@@ -115,40 +75,13 @@ export interface SendNotificationRequest {
   title: string;
   body: string;
   data?: Record<string, any>;
-  customerIds?: string[]; // Optional: send to specific customers only. If not provided, sends to all customers who granted permission
+  customerIds?: string[];
 }
 
 export interface JwtPayload {
   userId: string;
   email: string;
   role: 'admin' | 'user';
-}
-
-export interface RestaurantDocument extends Document {
-  name: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  description?: string;
-  category?: string;
-  locations?: string;
-  country?: string;
-  plan?: string;
-  billingCycle?: 'Monthly' | 'Yearly';
-  userId?: mongoose.Types.ObjectId;
-  signupPageConfig?: {
-    headerImage?: string;
-    welcomeTitle?: string;
-    description?: string;
-    formFields?: {
-      fullName: boolean;
-      birthday: boolean;
-      email: boolean;
-      phone: boolean;
-    };
-  };
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface CreateRestaurantRequest {
@@ -191,18 +124,6 @@ export interface UpdateRestaurantRequest {
 
 export type TransactionType = 'REGISTRATION' | 'EARNED' | 'REDEEMED' | 'EXPIRED' | 'ADJUSTED' | 'REFUNDED';
 
-export interface TransactionDocument extends Document {
-  customerId: mongoose.Types.ObjectId;
-  restaurantId: string;
-  type: TransactionType;
-  amount: number;
-  description: string;
-  balanceAfter: number;
-  metadata?: Record<string, any>;
-  createdBy?: string;
-  createdAt: Date;
-}
-
 export interface CreateTransactionRequest {
   customerId: string;
   restaurantId: string;
@@ -220,4 +141,3 @@ export interface GetTransactionsResponse {
   limit?: number;
   balance: number;
 }
-

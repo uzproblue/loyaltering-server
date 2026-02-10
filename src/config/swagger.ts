@@ -6,7 +6,7 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: 'CMUS Server API',
       version: '1.0.0',
-      description: 'API documentation for CMUS Server with MongoDB and user management endpoints',
+      description: 'API documentation for CMUS Server with PostgreSQL (Neon) and user management endpoints',
       contact: {
         name: 'API Support',
       },

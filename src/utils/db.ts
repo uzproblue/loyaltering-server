@@ -1,90 +1,65 @@
-import mongoose from 'mongoose';
+import { PrismaClient } from '@prisma/client';
 
-let cachedConnection: typeof mongoose | null = null;
+declare global {
+  // eslint-disable-next-line no-var
+  var __prisma: PrismaClient | undefined;
+}
+
+const prismaClientSingleton = (): PrismaClient => {
+  return new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
+};
+
+export const prisma = globalThis.__prisma ?? prismaClientSingleton();
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.__prisma = prisma;
+}
+
+let connectionPromise: Promise<PrismaClient> | null = null;
 
 /**
- * Connect to MongoDB with connection caching for serverless environments
+ * Connect to PostgreSQL (Neon) with connection caching for serverless
  */
-export const connectDB = async (): Promise<typeof mongoose> => {
-  // Return cached connection if available and ready
-  if (cachedConnection && mongoose.connection.readyState === 1) {
-    return cachedConnection;
+export const connectDB = async (): Promise<PrismaClient> => {
+  if (connectionPromise) {
+    return connectionPromise;
   }
-
-  // If connection exists but not ready, wait for it
-  if (cachedConnection && mongoose.connection.readyState === 2) {
-    return new Promise((resolve, reject) => {
-      mongoose.connection.once('connected', () => resolve(cachedConnection!));
-      mongoose.connection.once('error', reject);
-    });
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error('DATABASE_URL environment variable is not set');
   }
+  connectionPromise = prisma.$connect().then(() => {
+    console.log('PostgreSQL (Neon) connected successfully');
+    return prisma;
+  });
+  return connectionPromise;
+};
 
-  // Create new connection
-  const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cmus';
-  
-  if (!MONGODB_URI) {
-    throw new Error('MONGODB_URI environment variable is not set');
-  }
-
+/**
+ * Check if database is reachable
+ */
+export const isConnected = async (): Promise<boolean> => {
   try {
-    // Set connection options for serverless
-    const options = {
-      bufferCommands: false, // Disable mongoose buffering
-      maxPoolSize: 10, // Maintain up to 10 socket connections
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-      family: 4 // Use IPv4, skip trying IPv6
-    };
-
-    cachedConnection = await mongoose.connect(MONGODB_URI, options);
-    console.log('MongoDB connected successfully');
-    return cachedConnection;
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error;
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch {
+    return false;
   }
 };
 
 /**
- * Check if MongoDB is connected
- */
-export const isConnected = (): boolean => {
-  return mongoose.connection.readyState === 1;
-};
-
-/**
- * Wait for MongoDB connection to be ready
+ * Wait for database connection to be ready
  */
 export const waitForConnection = async (timeout: number = 10000): Promise<void> => {
-  if (isConnected()) {
-    return;
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    try {
+      await prisma.$connect();
+      return;
+    } catch {
+      await new Promise((r) => setTimeout(r, 100));
+    }
   }
-
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error('MongoDB connection timeout'));
-    }, timeout);
-
-    const checkConnection = () => {
-      if (isConnected()) {
-        clearTimeout(timer);
-        resolve();
-      } else {
-        setTimeout(checkConnection, 100);
-      }
-    };
-
-    mongoose.connection.once('connected', () => {
-      clearTimeout(timer);
-      resolve();
-    });
-
-    mongoose.connection.once('error', (error) => {
-      clearTimeout(timer);
-      reject(error);
-    });
-
-    // Start checking
-    checkConnection();
-  });
+  throw new Error('PostgreSQL connection timeout');
 };

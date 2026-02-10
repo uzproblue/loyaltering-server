@@ -166,9 +166,9 @@ app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/upload', uploadRoutes);
 
-// Initialize MongoDB connection (non-blocking for serverless)
+// Initialize PostgreSQL (Neon) connection (non-blocking for serverless)
 connectDB().catch((error: Error) => {
-  console.error('Failed to connect to MongoDB:', error);
+  console.error('Failed to connect to PostgreSQL:', error);
   // Don't exit in serverless - let requests handle the error
 });
 

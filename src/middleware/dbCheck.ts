@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { isConnected, waitForConnection, connectDB } from '../utils/db';
+import { connectDB, isConnected } from '../utils/db';
 
 /**
- * Middleware to ensure MongoDB connection is ready before handling requests
+ * Middleware to ensure PostgreSQL (Neon) connection is ready before handling requests
  */
 export const ensureDBConnection = async (
   req: Request,
@@ -10,17 +10,8 @@ export const ensureDBConnection = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Try to connect if not connected
-    if (!isConnected()) {
-      try {
-        await connectDB();
-      } catch (connectError) {
-        // If connection fails, wait a bit and try again
-        console.warn('Initial connection failed, waiting for connection...', connectError);
-      }
-      
-      // Wait for connection to be ready
-      await waitForConnection(10000); // Wait up to 10 seconds
+    if (!(await isConnected())) {
+      await connectDB();
     }
     next();
   } catch (error) {
@@ -28,7 +19,7 @@ export const ensureDBConnection = async (
     res.status(503).json({
       success: false,
       message: 'Database connection unavailable',
-      error: 'Service temporarily unavailable'
+      error: 'Service temporarily unavailable',
     });
   }
 };
