@@ -3,6 +3,7 @@ services:
     name: loyaltering-server
     env: node
     buildCommand: corepack enable && corepack prepare yarn@4.5.0 --activate && yarn install && yarn build && echo "Build complete. Checking dist folder:" && ls -la dist/ && echo "File location:" && find . -name "index.js" -type f | head -5
+    preDeployCommand: yarn prisma migrate deploy
     startCommand: cd /opt/render/project && pwd && echo "Looking for dist/index.js..." && if [ -f "dist/index.js" ]; then echo "Found dist/index.js" && node dist/index.js; else echo "ERROR: dist/index.js not found in /opt/render/project" && echo "Contents of project root:" && ls -la && echo "Contents of dist (if exists):" && ls -la dist/ 2>/dev/null || echo "dist folder does not exist" && echo "Searching for index.js:" && find . -name "index.js" -type f 2>/dev/null | head -10 && exit 1; fi
     envVars:
       - key: NODE_VERSION

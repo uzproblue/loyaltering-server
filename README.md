@@ -47,6 +47,21 @@ Transactional email (welcome email on registration, password reset) uses **SendG
 
 The sender (`FROM_EMAIL`) must be verified in SendGrid (single sender or domain authentication). If `SENDGRID_API_KEY` is not set, welcome and password-reset emails are skipped and a warning is logged.
 
+### Stripe (subscriptions)
+
+Monthly/yearly plan payments use **Stripe**. Configure in `.env`:
+
+| Variable | Description |
+|----------|-------------|
+| `STRIPE_SECRET_KEY` | Stripe secret key (Dashboard → Developers → API keys). Required for checkout and webhooks. |
+| `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (Dashboard → Developers → Webhooks → add endpoint `https://<your-server>/api/stripe/webhook`, then copy signing secret). |
+| `STRIPE_PRICE_BASIC_MONTHLY`, `STRIPE_PRICE_BASIC_YEARLY` | Stripe Price IDs for Basic plan (e.g. `price_xxx`). |
+| `STRIPE_PRICE_PROFESSIONAL_MONTHLY`, `STRIPE_PRICE_PROFESSIONAL_YEARLY` | Price IDs for Professional plan. |
+| `STRIPE_PRICE_ENTERPRISE_MONTHLY`, `STRIPE_PRICE_ENTERPRISE_YEARLY` | Price IDs for Enterprise plan. |
+| `FRONTEND_URL` or `STRIPE_SUCCESS_URL` / `STRIPE_CANCEL_URL` | Optional. Base URL of the platform (e.g. `http://localhost:3001`) and/or full success/cancel URLs for Stripe Checkout redirects. Default success: `{FRONTEND_URL}/onboarding?payment=success`, cancel: `{FRONTEND_URL}/onboarding?payment=cancel`. |
+
+Create Products and Prices in Stripe Dashboard for each plan (Basic, Professional, Enterprise) with monthly and yearly recurring prices, then set the six `STRIPE_PRICE_*` variables. If `STRIPE_SECRET_KEY` is not set, checkout and webhook endpoints return 503 / 400.
+
 **Extensibility:** Future Twilio features (SMS, Verify for 2FA, etc.) can be added via new server services and env vars (e.g. `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`) without changing the existing email flow.
 
 ## Running the Server
