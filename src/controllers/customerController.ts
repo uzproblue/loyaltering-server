@@ -1,8 +1,5 @@
 import { Request, Response } from 'express';
-import mongoose from 'mongoose';
-import Customer from '../models/Customer';
-import Restaurant from '../models/Restaurant';
-import Transaction from '../models/Transaction';
+import { prisma } from '../utils/db';
 import { ApiResponse, CreateCustomerRequest, TypedRequest } from '../types';
 import { calculateCustomerBalance } from './transactionController';
 import { emitTransactionEvent } from '../services/socketService';
@@ -13,17 +10,15 @@ function normalizePhone(phone: string): string {
 }
 
 async function generateMemberCode(restaurantId?: string): Promise<string> {
-  // 5-digit member code: 10000–99999
   for (let attempt = 0; attempt < 15; attempt++) {
     const code = String(Math.floor(10000 + Math.random() * 90000));
-
-    const query: any = { memberCode: code };
-    if (restaurantId) query.restaurantId = restaurantId;
-
-    const exists = await Customer.exists(query);
+    const exists = await prisma.customer.findFirst({
+      where: restaurantId
+        ? { restaurantId, memberCode: code }
+        : { memberCode: code, restaurantId: null },
+    });
     if (!exists) return code;
   }
-
   throw new Error('Failed to generate unique member code');
 }
 
@@ -34,123 +29,109 @@ export const createCustomer = async (
   try {
     const { name, email, phone, dateOfBirth, restaurantId } = req.body;
 
-    // Only email is required
     if (!email || typeof email !== 'string' || email.trim() === '') {
       res.status(400).json({
         success: false,
-        message: 'Please provide a valid email address'
+        message: 'Please provide a valid email address',
       });
       return;
     }
-
-    // Validate email format
-    const emailRegex = /^\S+@\S+\.\S+$/;
-    if (!emailRegex.test(email.trim())) {
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
       res.status(400).json({
         success: false,
-        message: 'Please provide a valid email address'
+        message: 'Please provide a valid email address',
       });
       return;
     }
-
-    // Validate restaurantId if provided
     if (restaurantId && typeof restaurantId !== 'string') {
       res.status(400).json({
         success: false,
-        message: 'Invalid restaurant ID format'
+        message: 'Invalid restaurant ID format',
       });
       return;
     }
 
-    // Validate date of birth format if provided
     let dob: Date | undefined;
     if (dateOfBirth) {
       dob = new Date(dateOfBirth);
       if (isNaN(dob.getTime())) {
         res.status(400).json({
           success: false,
-          message: 'Invalid date of birth format'
+          message: 'Invalid date of birth format',
         });
         return;
       }
     }
 
-    // Check if customer already exists
-    const existingCustomer = await Customer.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingCustomer = await prisma.customer.findUnique({
+      where: { email: normalizedEmail },
+    });
     if (existingCustomer) {
       res.status(409).json({
         success: false,
-        message: 'Customer with this email already exists'
+        message: 'Customer with this email already exists',
       });
       return;
     }
 
-    // Create new customer
     const phoneNormalized = phone ? normalizePhone(phone) : undefined;
-    const memberCode = await generateMemberCode(restaurantId || undefined);
+    const rid = restaurantId && typeof restaurantId === 'string' ? restaurantId.trim() : undefined;
+    const memberCode = await generateMemberCode(rid || undefined);
 
-    const customerData: any = {
-      email: email.trim().toLowerCase(),
-      memberCode,
-      restaurantId: restaurantId || undefined
-    };
-
-    // Add optional fields only if provided
-    if (name && typeof name === 'string' && name.trim() !== '') {
-      customerData.name = name.trim();
-    }
-
-    if (phone && typeof phone === 'string' && phone.trim() !== '') {
-      customerData.phone = phone.trim();
-      customerData.phoneNormalized = phoneNormalized;
-    }
-
-    if (dob) {
-      customerData.dateOfBirth = dob;
-    }
-
-    const customer = new Customer(customerData);
-
-    const savedCustomer = await customer.save();
-    
-    // Create REGISTRATION transaction (welcome bonus points)
-    // Default welcome bonus is 0, but transaction is created for audit trail
-    const welcomeBonusPoints = parseInt(process.env.WELCOME_BONUS_POINTS || '0', 10);
-    
-    const registrationTransaction = new Transaction({
-      customerId: savedCustomer._id,
-      restaurantId: savedCustomer.restaurantId || '',
-      type: 'REGISTRATION',
-      amount: welcomeBonusPoints,
-      description: welcomeBonusPoints > 0 
-        ? `Welcome bonus: ${welcomeBonusPoints} points awarded on registration`
-        : 'Customer registration',
-      metadata: {}
+    const savedCustomer = await prisma.customer.create({
+      data: {
+        email: normalizedEmail,
+        memberCode,
+        ...(rid && { restaurantId: rid }),
+        ...(name && name.trim() !== '' && { name: name.trim() }),
+        ...(phone && phone.trim() !== '' && { phone: phone.trim(), phoneNormalized }),
+        ...(dob && { dateOfBirth: dob }),
+      },
     });
 
-    await registrationTransaction.save();
-    
-    // Populate customer data and emit real-time event
-    const transactionWithCustomer = await Transaction.findById(registrationTransaction._id)
-      .populate('customerId', 'name email')
-      .lean();
-    
-    if (transactionWithCustomer && savedCustomer.restaurantId) {
-      emitTransactionEvent(savedCustomer.restaurantId, {
-        transaction: transactionWithCustomer,
-        customer: transactionWithCustomer.customerId
+    const welcomeBonusPoints = parseInt(process.env.WELCOME_BONUS_POINTS || '0', 10);
+    const balanceAfter = welcomeBonusPoints;
+
+    let registrationTransaction: { id: string } | null = null;
+    if (savedCustomer.restaurantId) {
+      registrationTransaction = await prisma.transaction.create({
+        data: {
+          customerId: savedCustomer.id,
+          restaurantId: savedCustomer.restaurantId,
+          type: 'REGISTRATION',
+          amount: welcomeBonusPoints,
+          description:
+            welcomeBonusPoints > 0
+              ? `Welcome bonus: ${welcomeBonusPoints} points awarded on registration`
+              : 'Customer registration',
+          balanceAfter,
+          metadata: {},
+        },
       });
+
+      const transactionWithCustomer = await prisma.transaction.findUnique({
+        where: { id: registrationTransaction!.id },
+        include: { customer: true },
+      });
+      if (transactionWithCustomer) {
+        emitTransactionEvent(savedCustomer.restaurantId, {
+          transaction: transactionWithCustomer as any,
+          customer: transactionWithCustomer.customer as any,
+        });
+      }
     }
 
-    // Send customer welcome email with member ID and QR code (fire-and-forget)
     setImmediate(async () => {
       try {
         let restaurantName: string | undefined;
         if (savedCustomer.restaurantId) {
-          const restaurant = await Restaurant.findById(savedCustomer.restaurantId).select('name').lean();
-          restaurantName = restaurant?.name;
+          const restaurant = await prisma.restaurant.findUnique({
+            where: { id: savedCustomer.restaurantId },
+            select: { name: true },
+          });
+          restaurantName = restaurant?.name ?? undefined;
         }
-        // Use name if available, otherwise use email or a default
         const customerName = savedCustomer.name || savedCustomer.email.split('@')[0] || 'Customer';
         await sendCustomerWelcomeEmail(
           savedCustomer.email,
@@ -163,29 +144,17 @@ export const createCustomer = async (
       }
     });
 
-    const customerResponse = savedCustomer.toObject();
-
     res.status(201).json({
       success: true,
       message: 'Customer created successfully',
-      data: customerResponse
+      data: savedCustomer,
     });
   } catch (error: any) {
     console.error('Error creating customer:', error);
-    
-    if (error.name === 'ValidationError') {
-      res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        errors: Object.values(error.errors).map((err: any) => err.message)
-      });
-      return;
-    }
-
     res.status(500).json({
       success: false,
       message: 'Error creating customer',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -195,19 +164,19 @@ export const getAllCustomers = async (
   res: Response<ApiResponse>
 ): Promise<void> => {
   try {
-    const customers = await Customer.find();
+    const customers = await prisma.customer.findMany();
     res.status(200).json({
       success: true,
       message: 'Customers retrieved successfully',
       count: customers.length,
-      data: customers
+      data: customers,
     });
   } catch (error: any) {
     console.error('Error fetching customers:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching customers',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -219,28 +188,19 @@ export const getCustomerById = async (
   try {
     const { id } = req.params;
     const includeBalance = req.query.includeBalance === 'true';
-    
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({
-        success: false,
-        message: 'Invalid customer ID'
-      });
-      return;
-    }
 
-    const customer = await Customer.findById(id);
-    
+    const customer = await prisma.customer.findUnique({
+      where: { id },
+    });
     if (!customer) {
       res.status(404).json({
         success: false,
-        message: 'Customer not found'
+        message: 'Customer not found',
       });
       return;
     }
 
-    const customerData: any = customer.toObject();
-    
-    // Optionally include balance
+    const customerData: any = { ...customer };
     if (includeBalance) {
       customerData.balance = await calculateCustomerBalance(id);
     }
@@ -248,21 +208,18 @@ export const getCustomerById = async (
     res.status(200).json({
       success: true,
       message: 'Customer retrieved successfully',
-      data: customerData
+      data: customerData,
     });
   } catch (error: any) {
     console.error('Error fetching customer:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching customer',
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-/**
- * Get customer balance
- */
 export const getCustomerBalance = async (
   req: Request,
   res: Response<ApiResponse<{ balance: number }>>
@@ -270,50 +227,33 @@ export const getCustomerBalance = async (
   try {
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({
-        success: false,
-        message: 'Invalid customer ID'
-      });
-      return;
-    }
-
-    // Verify customer exists
-    const customer = await Customer.findById(id);
+    const customer = await prisma.customer.findUnique({
+      where: { id },
+    });
     if (!customer) {
       res.status(404).json({
         success: false,
-        message: 'Customer not found'
+        message: 'Customer not found',
       });
       return;
     }
 
-    // Calculate balance from all transactions
     const balance = await calculateCustomerBalance(id);
-
     res.status(200).json({
       success: true,
       message: 'Balance retrieved successfully',
-      data: { balance }
+      data: { balance },
     });
   } catch (error: any) {
     console.error('Error fetching balance:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching balance',
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-/**
- * Search customer for an operator by q (memberCode, phone, or email)
- * Scoped to a restaurant via restaurantId (preferred).
- * Backwards-compatible fallback: if restaurantId is missing, tries userId -> restaurant lookup.
- *
- * GET /api/customers/search?q=...&restaurantId=...
- * GET /api/customers/search?q=...&userId=... (fallback)
- */
 export const searchCustomer = async (
   req: Request & { query: { q?: string; restaurantId?: string; userId?: string } },
   res: Response<ApiResponse>
@@ -330,49 +270,44 @@ export const searchCustomer = async (
 
     let restaurantId = restaurantIdRaw;
 
-    // Preferred: scope by explicit restaurantId
-    if (restaurantId) {
-      // Most restaurantIds are Mongo ObjectIds; validate when it looks like one
-      if (!mongoose.Types.ObjectId.isValid(restaurantId)) {
-        res.status(400).json({ success: false, message: 'Valid restaurantId is required for scoped search' });
-        return;
-      }
-    } else {
-      // Fallback: derive restaurantId from operator userId
-      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-        res.status(400).json({ success: false, message: 'restaurantId (preferred) or valid userId is required for scoped search' });
-        return;
-      }
-
-      const restaurant = await Restaurant.findOne({ userId: new mongoose.Types.ObjectId(userId) });
+    if (!restaurantId && userId) {
+      const restaurant = await prisma.restaurant.findFirst({
+        where: { userId },
+      });
       if (!restaurant) {
         res.status(404).json({ success: false, message: 'Restaurant not found for user' });
         return;
       }
+      restaurantId = restaurant.id;
+    }
 
-      restaurantId = restaurant._id.toString();
+    if (!restaurantId) {
+      res.status(400).json({
+        success: false,
+        message: 'restaurantId (preferred) or valid userId is required for scoped search',
+      });
+      return;
     }
 
     const q = qRaw;
     const digitsOnly = q.replace(/\D/g, '');
 
-    const baseQuery: any = { restaurantId };
-
-    let customer: any = null;
-
+    let customer = null;
     if (q.includes('@')) {
-      customer = await Customer.findOne({ ...baseQuery, email: q.toLowerCase() });
-    } else if (q.startsWith('#') || (digitsOnly && digitsOnly.length > 0 && digitsOnly.length <= 6)) {
+      customer = await prisma.customer.findFirst({
+        where: { restaurantId, email: q.toLowerCase() },
+      });
+    } else if (q.startsWith('#') || (digitsOnly.length > 0 && digitsOnly.length <= 6)) {
       const memberCode = digitsOnly || q.replace('#', '');
-      customer = await Customer.findOne({ ...baseQuery, memberCode });
+      customer = await prisma.customer.findFirst({
+        where: { restaurantId, memberCode },
+      });
     } else {
-      // Phone lookup. Prefer normalized, fallback to exact phone match.
-      customer = await Customer.findOne({
-        ...baseQuery,
-        $or: [
-          { phoneNormalized: digitsOnly },
-          { phone: q }
-        ]
+      customer = await prisma.customer.findFirst({
+        where: {
+          restaurantId,
+          OR: [{ phoneNormalized: digitsOnly }, { phone: q }],
+        },
       });
     }
 
@@ -387,8 +322,7 @@ export const searchCustomer = async (
     res.status(500).json({
       success: false,
       message: 'Error searching customer',
-      error: error.message
+      error: error.message,
     });
   }
 };
-

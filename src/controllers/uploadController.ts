@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import User from '../models/User';
+import { prisma } from '../utils/db';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { isR2Configured } from '../config/r2';
 import {
@@ -86,7 +86,9 @@ export const uploadImage = async (req: AuthenticatedRequest, res: Response): Pro
 
     let buffer: Buffer;
     let contentType: string;
-    const resolvedUserId = userId || (await User.findOne({ email: userEmail }).select('_id').then((u: { _id?: { toString(): string } } | null) => u?._id?.toString()));
+    const resolvedUserId =
+      userId ||
+      (await prisma.user.findFirst({ where: { email: userEmail }, select: { id: true } }).then((u: { id: string } | null) => u?.id));
 
     if (body?.image && typeof body.image === 'string') {
       const parsed = parseBase64Image(body.image);
@@ -121,8 +123,11 @@ export const uploadImage = async (req: AuthenticatedRequest, res: Response): Pro
         res.status(400).json({ success: false, message: 'restaurantId is required for restaurant-header upload' });
         return;
       }
-      const user = await User.findById(resolvedUserId || userId);
-      const userRestaurantId = (user as any)?.restaurantId?.toString();
+      const user = await prisma.user.findUnique({
+        where: { id: resolvedUserId || userId || '' },
+        select: { restaurantId: true, role: true },
+      });
+      const userRestaurantId = user?.restaurantId ?? undefined;
       if (userRestaurantId !== restaurantId && user?.role !== 'admin') {
         res.status(403).json({ success: false, message: 'You can only upload header for your restaurant' });
         return;
