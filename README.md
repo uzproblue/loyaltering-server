@@ -62,6 +62,23 @@ Monthly/yearly plan payments use **Stripe**. Configure in `.env`:
 
 Create Products and Prices in Stripe Dashboard for each plan (Basic, Professional, Enterprise) with monthly and yearly recurring prices, then set the six `STRIPE_PRICE_*` variables. If `STRIPE_SECRET_KEY` is not set, checkout and webhook endpoints return 503 / 400.
 
+### Google Wallet (Add to Wallet – Android / web)
+
+Used by the customer-app to generate “Add to Google Wallet” save URLs for loyalty passes. Configure in `.env`:
+
+| Variable | Description |
+|----------|-------------|
+| `GOOGLE_WALLET_ISSUER_ID` | Issuer ID from [Google Pay & Wallet Console](https://pay.google.com/business/console). Required. |
+| `GOOGLE_WALLET_SERVICE_ACCOUNT_JSON` | Full JSON content of the service account key (single line or minified). Alternatively use `GOOGLE_APPLICATION_CREDENTIALS` with a path to the JSON file. |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to service account JSON file (if not using inline JSON). |
+| `GOOGLE_WALLET_CLASS_ID` | Optional. Loyalty class ID (default: `loyalty_card_class`). |
+| `GOOGLE_WALLET_ISSUER_NAME` | Optional. Display name for the issuer. |
+| `GOOGLE_WALLET_LOGO_URL` | Optional. URL for program logo on the pass. |
+| `GOOGLE_WALLET_HERO_IMAGE_URL` | Optional. URL for hero image on the pass. |
+| `GOOGLE_WALLET_ORIGINS` | Optional. Comma-separated allowed origins (e.g. `https://your-app.com`). Must match Google Wallet Console. |
+
+Enable the Google Wallet API in your Google Cloud project, create a service account with Wallet Object Issuer permissions, and register your issuer and loyalty program in the Google Pay & Wallet Console. If credentials are not set, `POST /api/wallet/google-pass` returns 503.
+
 **Extensibility:** Future Twilio features (SMS, Verify for 2FA, etc.) can be added via new server services and env vars (e.g. `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`) without changing the existing email flow.
 
 ## Running the Server

@@ -14,6 +14,7 @@ import restaurantRoutes from './routes/restaurantRoutes';
 import transactionRoutes from './routes/transactionRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import stripeRoutes from './routes/stripeRoutes';
+import walletRoutes from './routes/walletRoutes';
 import swaggerSpec from './config/swagger';
 import { initializeSocketIO } from './services/socketService';
 import { connectDB } from './utils/db';
@@ -174,6 +175,7 @@ app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/wallet', walletRoutes);
 
 // Initialize PostgreSQL (Neon) connection (non-blocking for serverless)
 connectDB().catch((error: Error) => {
