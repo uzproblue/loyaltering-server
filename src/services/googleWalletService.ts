@@ -72,16 +72,23 @@ function buildLoyaltyClass(info: CustomerWalletInfo): Record<string, unknown> {
   const programName = info.restaurantName || 'Loyalty Card';
   const logoUri = info.logoUrl || process.env.GOOGLE_WALLET_LOGO_URL || '';
 
+  const issuerDisplayName = process.env.GOOGLE_WALLET_ISSUER_NAME || programName;
   const loyaltyClass: Record<string, unknown> = {
     id: `${issuerId}.${classId}`,
-    issuerName: process.env.GOOGLE_WALLET_ISSUER_NAME || programName,
-    reviewStatus: 'UNDER_REVIEW',
-    programName,
+    localizedIssuerName: {
+      defaultValue: { language: 'en-US', value: issuerDisplayName },
+    },
+    localizedProgramName: {
+      defaultValue: { language: 'en-US', value: programName },
+    },
     hexBackgroundColor: '#303030',
   };
   if (logoUri) {
     loyaltyClass.programLogo = {
       sourceUri: { uri: logoUri },
+      contentDescription: {
+        defaultValue: { language: 'en-US', value: 'Program logo' },
+      },
     };
   }
   return loyaltyClass;
@@ -122,8 +129,10 @@ function buildLoyaltyObject(info: CustomerWalletInfo): Record<string, unknown> {
     accountName: info.name || 'Member',
     accountId: memberId,
     loyaltyPoints: {
-      label: 'Points Balance',
-      balance: { string: '0 pts' },
+      localizedLabel: {
+        defaultValue: { language: 'en-US', value: 'Points Balance' },
+      },
+      balance: { int: '0' },
     },
   };
   if (heroUri) {
