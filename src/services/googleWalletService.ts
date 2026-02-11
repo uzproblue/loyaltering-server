@@ -77,6 +77,7 @@ function buildLoyaltyClass(info: CustomerWalletInfo): Record<string, unknown> {
     issuerName: process.env.GOOGLE_WALLET_ISSUER_NAME || programName,
     reviewStatus: 'UNDER_REVIEW',
     programName,
+    hexBackgroundColor: '#303030',
   };
   if (logoUri) {
     loyaltyClass.programLogo = {
@@ -94,6 +95,7 @@ function buildLoyaltyObject(info: CustomerWalletInfo): Record<string, unknown> {
   const classId = getClassId();
   const objectId = `${issuerId}.${info.customerId.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
   const memberId = info.memberCode || info.customerId;
+  const memberDisplay = memberId ? `#${String(memberId).slice(-6)}` : '—';
   const qrValue = JSON.stringify({
     id: memberId,
     name: info.name,
@@ -109,18 +111,19 @@ function buildLoyaltyObject(info: CustomerWalletInfo): Record<string, unknown> {
     state: 'ACTIVE',
     textModulesData: [
       { header: 'Member Name', body: info.name || '—', id: 'member_name' },
-      { header: 'Member ID', body: memberId, id: 'member_id' },
+      { header: 'Member ID', body: memberDisplay, id: 'member_id' },
+      { header: 'Tier', body: 'Member', id: 'tier' },
     ],
     barcode: {
       type: 'QR_CODE',
       value: qrValue,
-      alternateText: memberId,
+      alternateText: memberDisplay,
     },
     accountName: info.name || 'Member',
     accountId: memberId,
     loyaltyPoints: {
-      label: 'Points',
-      balance: { string: '0' },
+      label: 'Points Balance',
+      balance: { string: '0 pts' },
     },
   };
   if (heroUri) {
