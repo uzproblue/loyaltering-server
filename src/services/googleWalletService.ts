@@ -72,17 +72,18 @@ function buildLoyaltyClass(info: CustomerWalletInfo): Record<string, unknown> {
   const programName = info.restaurantName || 'Loyalty Card';
   const logoUri = info.logoUrl || process.env.GOOGLE_WALLET_LOGO_URL || '';
 
-  return {
+  const loyaltyClass: Record<string, unknown> = {
     id: `${issuerId}.${classId}`,
     issuerName: process.env.GOOGLE_WALLET_ISSUER_NAME || programName,
     reviewStatus: 'UNDER_REVIEW',
     programName,
-    programLogo: {
-      sourceUri: {
-        uri: logoUri,
-      },
-    },
   };
+  if (logoUri) {
+    loyaltyClass.programLogo = {
+      sourceUri: { uri: logoUri },
+    };
+  }
+  return loyaltyClass;
 }
 
 /**
@@ -102,15 +103,10 @@ function buildLoyaltyObject(info: CustomerWalletInfo): Record<string, unknown> {
 
   const heroUri = info.heroImageUrl || process.env.GOOGLE_WALLET_HERO_IMAGE_URL || '';
 
-  return {
+  const loyaltyObject: Record<string, unknown> = {
     id: objectId,
     classId: `${issuerId}.${classId}`,
     state: 'ACTIVE',
-    heroImage: {
-      sourceUri: {
-        uri: heroUri,
-      },
-    },
     textModulesData: [
       { header: 'Member Name', body: info.name || '—', id: 'member_name' },
       { header: 'Member ID', body: memberId, id: 'member_id' },
@@ -127,6 +123,12 @@ function buildLoyaltyObject(info: CustomerWalletInfo): Record<string, unknown> {
       balance: { string: '0' },
     },
   };
+  if (heroUri) {
+    loyaltyObject.heroImage = {
+      sourceUri: { uri: heroUri },
+    };
+  }
+  return loyaltyObject;
 }
 
 /**

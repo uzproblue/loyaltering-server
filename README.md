@@ -77,7 +77,7 @@ Used by the customer-app to generate “Add to Google Wallet” save URLs for lo
 | `GOOGLE_WALLET_HERO_IMAGE_URL` | Optional. URL for hero image on the pass. |
 | `GOOGLE_WALLET_ORIGINS` | Optional. Comma-separated allowed origins (e.g. `https://your-app.com`). Must match Google Wallet Console. |
 
-Enable the Google Wallet API in your Google Cloud project, create a service account with Wallet Object Issuer permissions, and register your issuer and loyalty program in the Google Pay & Wallet Console. If credentials are not set, `POST /api/wallet/google-pass` returns 503.
+If `GOOGLE_WALLET_LOGO_URL` and `GOOGLE_WALLET_HERO_IMAGE_URL` are not set (and the restaurant has no header image in signup config), the pass is still created but without program logo or hero image. Enable the Google Wallet API in your Google Cloud project, create a service account with Wallet Object Issuer permissions, and register your issuer and loyalty program in the Google Pay & Wallet Console. If credentials are not set, `POST /api/wallet/google-pass` returns 503.
 
 **Extensibility:** Future Twilio features (SMS, Verify for 2FA, etc.) can be added via new server services and env vars (e.g. `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`) without changing the existing email flow.
 

@@ -80,6 +80,7 @@ export const createGooglePass = async (
     const restaurantName = restaurant?.name ?? 'Loyalty Card';
     const signupConfig = (restaurant?.signupPageConfig as { headerImage?: string } | null) ?? {};
     const logoUrl = typeof signupConfig.headerImage === 'string' ? signupConfig.headerImage : undefined;
+    const heroImageUrl = logoUrl; // use same image as hero when available
 
     const info: CustomerWalletInfo = {
       customerId: customer.id,
@@ -88,6 +89,7 @@ export const createGooglePass = async (
       restaurantName,
       restaurantId: customer.restaurantId,
       logoUrl,
+      heroImageUrl,
     };
 
     const saveUrl = createGoogleWalletSaveUrl(info);
