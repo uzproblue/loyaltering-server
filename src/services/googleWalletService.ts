@@ -75,6 +75,7 @@ function buildLoyaltyClass(info: CustomerWalletInfo): Record<string, unknown> {
   const issuerDisplayName = process.env.GOOGLE_WALLET_ISSUER_NAME || programName;
   const loyaltyClass: Record<string, unknown> = {
     id: `${issuerId}.${classId}`,
+    reviewStatus: 'UNDER_REVIEW',
     localizedIssuerName: {
       defaultValue: { language: 'en-US', value: issuerDisplayName },
     },
