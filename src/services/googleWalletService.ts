@@ -70,28 +70,24 @@ function buildLoyaltyClass(info: CustomerWalletInfo): Record<string, unknown> {
   const issuerId = getIssuerId();
   const classId = getClassId();
   const programName = info.restaurantName || 'Loyalty Card';
-  const logoUri = info.logoUrl || process.env.GOOGLE_WALLET_LOGO_URL || '';
 
-  const issuerDisplayName = process.env.GOOGLE_WALLET_ISSUER_NAME || programName;
   const loyaltyClass: Record<string, unknown> = {
     id: `${issuerId}.${classId}`,
-    reviewStatus: 'UNDER_REVIEW',
+    // reviewStatus: 'UNDER_REVIEW',
+    programLogo:{
+      sourceUri: { uri: "https://images.unsplash.com/photo-1512568400610-62da28bc8a13?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=660&h=660" },
+      contentDescription: {
+        defaultValue: { language: 'en-US', value: programName },
+      },
+    },
     localizedIssuerName: {
-      defaultValue: { language: 'en-US', value: issuerDisplayName },
+      defaultValue: { language: 'en-US', value: `${programName} | GOLD `  },
     },
     localizedProgramName: {
-      defaultValue: { language: 'en-US', value: programName },
+      defaultValue: { language: 'en-US', value: info.name },
     },
     hexBackgroundColor: '#303030',
   };
-  if (logoUri) {
-    loyaltyClass.programLogo = {
-      sourceUri: { uri: logoUri },
-      contentDescription: {
-        defaultValue: { language: 'en-US', value: 'Program logo' },
-      },
-    };
-  }
   return loyaltyClass;
 }
 
@@ -102,45 +98,25 @@ function buildLoyaltyObject(info: CustomerWalletInfo): Record<string, unknown> {
   const issuerId = getIssuerId();
   const classId = getClassId();
   const objectId = `${issuerId}.${info.customerId.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-  const memberId = info.memberCode || info.customerId;
-  const memberDisplay = memberId ? `#${String(memberId).slice(-6)}` : '—';
-  const qrValue = JSON.stringify({
-    id: memberId,
-    name: info.name,
-    type: 'loyalty',
-    timestamp: Date.now(),
-  });
 
-  const heroUri = info.heroImageUrl || process.env.GOOGLE_WALLET_HERO_IMAGE_URL || '';
+
 
   const loyaltyObject: Record<string, unknown> = {
     id: objectId,
     classId: `${issuerId}.${classId}`,
-    state: 'ACTIVE',
-    textModulesData: [
-      { header: 'Member Name', body: info.name || '—', id: 'member_name' },
-      { header: 'Member ID', body: memberDisplay, id: 'member_id' },
-      { header: 'Tier', body: 'Member', id: 'tier' },
-    ],
-    barcode: {
-      type: 'QR_CODE',
-      value: qrValue,
-      alternateText: memberDisplay,
-    },
-    accountName: info.name || 'Member',
-    accountId: memberId,
     loyaltyPoints: {
+      balance: { int: '120' },
       localizedLabel: {
         defaultValue: { language: 'en-US', value: 'Points Balance' },
       },
-      balance: { int: '0' },
     },
+    barcode: {
+      type: 'QR_CODE',
+      value: info.customerId,
+      alternateText: "Member ID: " + info.memberCode,
+    }
+   
   };
-  if (heroUri) {
-    loyaltyObject.heroImage = {
-      sourceUri: { uri: heroUri },
-    };
-  }
   return loyaltyObject;
 }
 
