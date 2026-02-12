@@ -104,6 +104,7 @@ function buildLoyaltyObject(info: CustomerWalletInfo): Record<string, unknown> {
   const loyaltyObject: Record<string, unknown> = {
     id: objectId,
     classId: `${issuerId}.${classId}`,
+    state: 'ACTIVE',
     loyaltyPoints: {
       balance: { int: '120' },
       localizedLabel: {
