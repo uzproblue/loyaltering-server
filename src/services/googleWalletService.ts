@@ -73,7 +73,7 @@ function buildLoyaltyClass(info: CustomerWalletInfo): Record<string, unknown> {
 
   const loyaltyClass: Record<string, unknown> = {
     id: `${issuerId}.${classId}`,
-    // reviewStatus: 'UNDER_REVIEW',
+    reviewStatus: 'DRAFT',
     programLogo:{
       sourceUri: { uri: "https://images.unsplash.com/photo-1512568400610-62da28bc8a13?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=660&h=660" },
       contentDescription: {
