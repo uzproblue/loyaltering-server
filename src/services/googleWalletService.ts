@@ -26,12 +26,23 @@ export interface CustomerWalletInfo {
   balance?: number;
 }
 
+/** Normalize PEM private key: literal \n in JSON/env must become real newlines for JWT signing. */
+function normalizePrivateKey(key: string): string {
+  if (typeof key !== 'string' || !key) return key;
+  return key.replace(/\\n/g, '\n');
+}
+
 function getCredentials(): GoogleWalletCredentials {
   const json = process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_JSON;
   if (json) {
     try {
       const parsed = JSON.parse(json) as GoogleWalletCredentials;
-      if (parsed.client_email && parsed.private_key) return parsed;
+      if (parsed.client_email && parsed.private_key) {
+        return {
+          client_email: parsed.client_email,
+          private_key: normalizePrivateKey(parsed.private_key),
+        };
+      }
     } catch {
       throw new Error('Invalid GOOGLE_WALLET_SERVICE_ACCOUNT_JSON');
     }
@@ -41,7 +52,12 @@ function getCredentials(): GoogleWalletCredentials {
     const resolved = path.isAbsolute(credPath) ? credPath : path.resolve(process.cwd(), credPath);
     const content = fs.readFileSync(resolved, 'utf8');
     const parsed = JSON.parse(content) as GoogleWalletCredentials;
-    if (parsed.client_email && parsed.private_key) return parsed;
+    if (parsed.client_email && parsed.private_key) {
+      return {
+        client_email: parsed.client_email,
+        private_key: normalizePrivateKey(parsed.private_key),
+      };
+    }
   }
   throw new Error(
     'Google Wallet credentials not configured. Set GOOGLE_WALLET_SERVICE_ACCOUNT_JSON or GOOGLE_APPLICATION_CREDENTIALS.'
@@ -75,6 +91,7 @@ function buildLoyaltyClass(info: CustomerWalletInfo): Record<string, unknown> {
   const loyaltyClass: Record<string, unknown> = {
     id: `${issuerId}.${classId}`,
     reviewStatus: 'DRAFT',
+    programName,
     programLogo:{
       sourceUri: { uri: "https://images.unsplash.com/photo-1512568400610-62da28bc8a13?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=660&h=660" },
       contentDescription: {
@@ -85,7 +102,7 @@ function buildLoyaltyClass(info: CustomerWalletInfo): Record<string, unknown> {
       defaultValue: { language: 'en-US', value: `${programName} | GOLD `  },
     },
     localizedProgramName: {
-      defaultValue: { language: 'en-US', value: info.name },
+      defaultValue: { language: 'en-US', value: programName },
     },
     hexBackgroundColor: '#303030',
     accountIdLabel: 'Member ID',
@@ -101,17 +118,22 @@ function buildLoyaltyObject(info: CustomerWalletInfo): Record<string, unknown> {
   const classId = getClassId();
   const objectId = `${issuerId}.${info.customerId.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 
-  // Use memberCode for accountId, fallback to customerId if memberCode is not available
-  const accountId = info.memberCode || info.customerId;
-  
+  // Use memberCode for accountId, fallback to customerId if memberCode is not available (API recommends max 20 chars)
+  const accountIdRaw = info.memberCode || info.customerId;
+  const accountId = accountIdRaw.slice(0, 20);
+
   // Use actual balance if provided, otherwise default to 0
   const balance = info.balance !== undefined ? info.balance : 0;
+
+  // Cardholder name (API recommends max 20 chars)
+  const accountName = (info.name || 'Member').slice(0, 20);
 
   const loyaltyObject: Record<string, unknown> = {
     id: objectId,
     classId: `${issuerId}.${classId}`,
     state: 'ACTIVE',
-    accountId: accountId,
+    accountId,
+    accountName,
     loyaltyPoints: {
       balance: { int: balance.toString() },
       localizedLabel: {
@@ -139,10 +161,10 @@ export function createGoogleWalletSaveUrl(info: CustomerWalletInfo): string {
   const loyaltyClass = buildLoyaltyClass(info);
   const loyaltyObject = buildLoyaltyObject(info);
 
-  // origins is required by Google Wallet for save URLs; set GOOGLE_WALLET_ORIGINS to comma-separated domains (e.g. https://yourapp.com,https://www.yourapp.com)
+  // origins is required by Google Wallet for save URLs. GOOGLE_WALLET_ORIGINS must include the exact origin(s) where the "Add to Wallet" action runs (e.g. https://yourapp.com, https://www.yourapp.com). No trailing slash.
   if (origins.length === 0 && process.env.NODE_ENV !== 'test') {
     console.warn(
-      '[Google Wallet] GOOGLE_WALLET_ORIGINS is not set. Add to wallet may fail. Set to comma-separated origins, e.g. https://yourapp.com'
+      '[Google Wallet] GOOGLE_WALLET_ORIGINS is not set. Add to wallet may fail. Set to comma-separated origins matching your front-end, e.g. https://yourapp.com'
     );
   }
   const payload = {

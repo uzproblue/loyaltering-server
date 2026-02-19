@@ -75,7 +75,7 @@ Used by the customer-app to generate “Add to Google Wallet” save URLs for lo
 | `GOOGLE_WALLET_ISSUER_NAME` | Optional. Display name for the issuer. |
 | `GOOGLE_WALLET_LOGO_URL` | Optional. URL for program logo on the pass. |
 | `GOOGLE_WALLET_HERO_IMAGE_URL` | Optional. URL for hero image on the pass. |
-| `GOOGLE_WALLET_ORIGINS` | Optional. Comma-separated allowed origins (e.g. `https://your-app.com`). Must match Google Wallet Console. |
+| `GOOGLE_WALLET_ORIGINS` | **Required for Add to Wallet to work.** Comma-separated origins where the "Add to Wallet" action runs (e.g. `https://your-app.com`, `https://www.your-app.com`). No trailing slash. Must match the front-end origin and Google Wallet Console. |
 
 If `GOOGLE_WALLET_LOGO_URL` and `GOOGLE_WALLET_HERO_IMAGE_URL` are not set (and the restaurant has no header image in signup config), the pass is still created but without program logo or hero image. Enable the Google Wallet API in your Google Cloud project, create a service account with Wallet Object Issuer permissions, and register your issuer and loyalty program in the Google Pay & Wallet Console. If credentials are not set, `POST /api/wallet/google-pass` returns 503.
 
