@@ -88,9 +88,7 @@ function buildLoyaltyClass(info: CustomerWalletInfo): Record<string, unknown> {
       defaultValue: { language: 'en-US', value: info.name },
     },
     hexBackgroundColor: '#303030',
-    accountIdLabel: {
-      defaultValue: { language: 'en-US', value: 'Member ID' },
-    },
+    accountIdLabel: 'Member ID',
   };
   return loyaltyClass;
 }
@@ -141,16 +139,22 @@ export function createGoogleWalletSaveUrl(info: CustomerWalletInfo): string {
   const loyaltyClass = buildLoyaltyClass(info);
   const loyaltyObject = buildLoyaltyObject(info);
 
+  // origins is required by Google Wallet for save URLs; set GOOGLE_WALLET_ORIGINS to comma-separated domains (e.g. https://yourapp.com,https://www.yourapp.com)
+  if (origins.length === 0 && process.env.NODE_ENV !== 'test') {
+    console.warn(
+      '[Google Wallet] GOOGLE_WALLET_ORIGINS is not set. Add to wallet may fail. Set to comma-separated origins, e.g. https://yourapp.com'
+    );
+  }
   const payload = {
     iss: credentials.client_email,
     aud: 'google',
     typ: 'savetowallet',
     iat: Math.floor(Date.now() / 1000),
+    ...(origins.length > 0 ? { origins } : {}),
     payload: {
       loyaltyClasses: [loyaltyClass],
       loyaltyObjects: [loyaltyObject],
     },
-    ...(origins.length > 0 ? { origins } : {}),
   };
 
   const signedJwt = jwt.sign(
