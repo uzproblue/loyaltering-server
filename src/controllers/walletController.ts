@@ -6,6 +6,7 @@ import {
   isGoogleWalletConfigured,
   type CustomerWalletInfo,
 } from '../services/googleWalletService';
+import { calculateCustomerBalance } from './transactionController';
 
 export interface GooglePassRequest {
   customerId: string;
@@ -82,6 +83,9 @@ export const createGooglePass = async (
     const logoUrl = typeof signupConfig.headerImage === 'string' ? signupConfig.headerImage : undefined;
     const heroImageUrl = logoUrl; // use same image as hero when available
 
+    // Calculate actual customer balance from transactions
+    const balance = await calculateCustomerBalance(customer.id);
+
     const info: CustomerWalletInfo = {
       customerId: customer.id,
       name: customer.name ?? customer.email.split('@')[0] ?? 'Member',
@@ -90,6 +94,7 @@ export const createGooglePass = async (
       restaurantId: customer.restaurantId,
       logoUrl,
       heroImageUrl,
+      balance,
     };
 
     const saveUrl = createGoogleWalletSaveUrl(info);

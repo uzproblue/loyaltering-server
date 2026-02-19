@@ -23,6 +23,7 @@ export interface CustomerWalletInfo {
   restaurantId: string | null;
   logoUrl?: string;
   heroImageUrl?: string;
+  balance?: number;
 }
 
 function getCredentials(): GoogleWalletCredentials {
@@ -87,6 +88,9 @@ function buildLoyaltyClass(info: CustomerWalletInfo): Record<string, unknown> {
       defaultValue: { language: 'en-US', value: info.name },
     },
     hexBackgroundColor: '#303030',
+    accountIdLabel: {
+      defaultValue: { language: 'en-US', value: 'Member ID' },
+    },
   };
   return loyaltyClass;
 }
@@ -99,22 +103,27 @@ function buildLoyaltyObject(info: CustomerWalletInfo): Record<string, unknown> {
   const classId = getClassId();
   const objectId = `${issuerId}.${info.customerId.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 
-
+  // Use memberCode for accountId, fallback to customerId if memberCode is not available
+  const accountId = info.memberCode || info.customerId;
+  
+  // Use actual balance if provided, otherwise default to 0
+  const balance = info.balance !== undefined ? info.balance : 0;
 
   const loyaltyObject: Record<string, unknown> = {
     id: objectId,
     classId: `${issuerId}.${classId}`,
     state: 'ACTIVE',
+    accountId: accountId,
     loyaltyPoints: {
-      balance: { int: '120' },
+      balance: { int: balance.toString() },
       localizedLabel: {
         defaultValue: { language: 'en-US', value: 'Points Balance' },
       },
     },
     barcode: {
       type: 'QR_CODE',
-      value: info.customerId,
-      alternateText: "Member ID: " + info.memberCode,
+      value: accountId,
+      alternateText: `Member ID: ${accountId}`,
     }
    
   };
