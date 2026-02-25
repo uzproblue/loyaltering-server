@@ -79,7 +79,18 @@ export const register = async (
 
     await prisma.user.update({
       where: { id: savedUser.id },
-      data: { restaurantId: savedRestaurant.id },
+      data: { restaurantId: savedRestaurant.id, onboardingCompleted: true },
+    });
+
+    const trialEndsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await prisma.restaurant.update({
+      where: { id: savedRestaurant.id },
+      data: {
+        plan: 'basic',
+        billingCycle: 'Monthly',
+        trialEndsAt,
+        subscriptionStatus: 'trial',
+      },
     });
 
     setImmediate(() => {
