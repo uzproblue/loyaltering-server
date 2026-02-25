@@ -68,7 +68,8 @@ model Restaurant {
   userId                String?      // owner user id (admin who created)
   stripeCustomerId      String?      @unique
   stripeSubscriptionId String?
-  subscriptionStatus   String?      // active, past_due, canceled, incomplete, etc.
+  subscriptionStatus   String?      // active, past_due, canceled, incomplete, trial, etc.
+  trialEndsAt          DateTime?    // end of free trial (e.g. 1 month after signup)
   signupPageConfig      Json?        // { headerImage, welcomeTitle, description, formFields: { fullName, birthday, email, phone } }
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
