@@ -33,11 +33,13 @@ export interface RegisterRequest {
   email: string;
   businessName?: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface LoginRequest {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface ForgotPasswordRequest {

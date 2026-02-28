@@ -166,7 +166,7 @@ router.get('/locations', authenticate, restaurantController.getRestaurantLocatio
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:id', restaurantController.getRestaurantById);
+router.get('/:id', authenticate, restaurantController.getRestaurantById);
 
 /**
  * @swagger
@@ -221,7 +221,7 @@ router.get('/:id', restaurantController.getRestaurantById);
  *       500:
  *         description: Server error
  */
-router.put('/:id', restaurantController.updateRestaurant);
+router.put('/:id', authenticate, restaurantController.updateRestaurant);
 
 /**
  * @swagger

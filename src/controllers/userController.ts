@@ -31,6 +31,18 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response) =
     }
 
     const avatarUrl = await resolveImageUrl(user.avatar || '');
+    let plan: string | undefined;
+    let subscriptionStatus: string | undefined;
+    if (user.restaurantId) {
+      const restaurant = await prisma.restaurant.findUnique({
+        where: { id: user.restaurantId },
+        select: { plan: true, subscriptionStatus: true },
+      });
+      if (restaurant) {
+        plan = restaurant.plan ?? undefined;
+        subscriptionStatus = restaurant.subscriptionStatus ?? undefined;
+      }
+    }
 
     return res.json({
       success: true,
@@ -44,6 +56,8 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response) =
         role: user.role,
         restaurantId: user.restaurantId ?? undefined,
         onboardingCompleted: user.onboardingCompleted,
+        plan,
+        subscriptionStatus,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },

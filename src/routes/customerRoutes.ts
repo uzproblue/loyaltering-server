@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import * as customerController from '../controllers/customerController';
+import { authenticate } from '../middleware/auth';
 
 const router: Router = express.Router();
 
@@ -64,7 +65,7 @@ const router: Router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/', customerController.createCustomer);
+router.post('/', authenticate, customerController.createCustomer);
 
 /**
  * @swagger
@@ -98,13 +99,13 @@ router.post('/', customerController.createCustomer);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/', customerController.getAllCustomers);
+router.get('/', authenticate, customerController.getAllCustomers);
 
 /**
  * Search customer by memberCode/phone/email, scoped to operator userId restaurant
  * GET /api/customers/search?q=...&userId=...
  */
-router.get('/search', customerController.searchCustomer);
+router.get('/search', authenticate, customerController.searchCustomer);
 
 /**
  * @swagger
@@ -159,8 +160,8 @@ router.get('/search', customerController.searchCustomer);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:id', customerController.getCustomerById);
-router.get('/:id/balance', customerController.getCustomerBalance);
+router.get('/:id', authenticate, customerController.getCustomerById);
+router.get('/:id/balance', authenticate, customerController.getCustomerBalance);
 
 export default router;
 
