@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import * as walletController from '../controllers/walletController';
+import { authenticate } from '../middleware/auth';
 
 const router: Router = express.Router();
 
@@ -56,6 +57,6 @@ const router: Router = express.Router();
  *       500:
  *         description: Server error
  */
-router.post('/google-pass', walletController.createGooglePass);
+router.post('/google-pass', authenticate, walletController.createGooglePass);
 
 export default router;

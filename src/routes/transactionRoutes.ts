@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import * as transactionController from '../controllers/transactionController';
+import { authenticate } from '../middleware/auth';
 
 const router: Router = express.Router();
 
@@ -92,7 +93,7 @@ const router: Router = express.Router();
  *       500:
  *         description: Server error
  */
-router.post('/', transactionController.createTransaction);
+router.post('/', authenticate, transactionController.createTransaction);
 
 /**
  * @swagger
@@ -157,7 +158,7 @@ router.post('/', transactionController.createTransaction);
  *       500:
  *         description: Server error
  */
-router.get('/customer/:customerId', transactionController.getCustomerTransactions);
+router.get('/customer/:customerId', authenticate, transactionController.getCustomerTransactions);
 
 /**
  * @swagger
@@ -201,7 +202,7 @@ router.get('/customer/:customerId', transactionController.getCustomerTransaction
  *       500:
  *         description: Server error
  */
-router.get('/customer/:customerId/balance', transactionController.getCustomerBalance);
+router.get('/customer/:customerId/balance', authenticate, transactionController.getCustomerBalance);
 
 /**
  * @swagger
@@ -231,6 +232,6 @@ router.get('/customer/:customerId/balance', transactionController.getCustomerBal
  *       500:
  *         description: Server error
  */
-router.get('/restaurant/:restaurantId', transactionController.getRestaurantTransactions);
+router.get('/restaurant/:restaurantId', authenticate, transactionController.getRestaurantTransactions);
 
 export default router;

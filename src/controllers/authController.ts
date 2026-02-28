@@ -6,14 +6,15 @@ import { hashPassword, comparePassword } from '../utils/auth';
 import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/emailService';
 import { ApiResponse, RegisterRequest, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest, TypedRequest } from '../types';
 
-const generateToken = (userId: string, email: string, role: 'admin' | 'user'): string => {
+const generateToken = (userId: string, email: string, role: 'admin' | 'user', rememberMe?: boolean): string => {
   if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET is not defined');
   }
+  const expiresIn = rememberMe ? '14d' : '24h';
   return jwt.sign(
     { userId, email, role },
     process.env.JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn }
   );
 };
 
@@ -22,7 +23,7 @@ export const register = async (
   res: Response<ApiResponse>
 ): Promise<void> => {
   try {
-    const { fullName, email, businessName, password } = req.body;
+    const { fullName, email, businessName, password, rememberMe } = req.body;
 
     if (!fullName || !email || !password) {
       res.status(400).json({
@@ -99,7 +100,7 @@ export const register = async (
       );
     });
 
-    const token = generateToken(savedUser.id, savedUser.email, savedUser.role);
+    const token = generateToken(savedUser.id, savedUser.email, savedUser.role, rememberMe);
 
     res.status(201).json({
       success: true,
@@ -136,7 +137,7 @@ export const login = async (
   res: Response<ApiResponse>
 ): Promise<void> => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
       res.status(400).json({
@@ -167,7 +168,7 @@ export const login = async (
       return;
     }
 
-    const token = generateToken(user.id, user.email, user.role);
+    const token = generateToken(user.id, user.email, user.role, rememberMe);
 
     res.status(200).json({
       success: true,

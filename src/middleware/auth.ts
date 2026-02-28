@@ -16,15 +16,6 @@ export const authenticate = async (
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // Try to get from X-User-Email header (for Next.js API routes)
-      const userEmail = req.headers['x-user-email'] as string;
-      if (userEmail) {
-        // In a real app, you'd verify the session here
-        // For now, we'll use the email to find the user
-        req.user = { userId: '', email: userEmail, role: 'user' };
-        return next();
-      }
-      
       res.status(401).json({ success: false, message: 'No token provided' });
       return;
     }
